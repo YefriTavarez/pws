@@ -8,12 +8,23 @@ from frappe.model.document import Document
 
 class MaterialdeImpresion(Document):
 	def autoname(self):
-		name = "{0}".format(self.nombre.replace(" ", "-"))
+		self.name = get_new_name(self)
 
-		if self.calibre:
-			name = "{0}-{1}".format(name, self.calibre)
+def get_new_name(material_doc):
+	name = "{0}".format(material_doc.get("nombre").replace(" ", "-"))
 
-		if self.cara:
-			name = "{0}-{1}c".format(name, self.caras)
+	if material_doc.get("calibre"):
+		name = "{0}-{1}".format(name, material_doc.get("calibre"))
 
-		self.name = name.upper()
+	if material_doc.get("cara"):
+		name = "{0}-{1}c".format(name, material_doc.get("caras"))
+
+	return name.upper()
+
+@frappe.whitelist()
+def rename_doc(frm_doc):
+	doc = frappe.json.loads(frm_doc)
+
+	if not doc.get("name") == get_new_name(doc):
+		return frappe.rename_doc("Material de Impresion", 
+			doc.get("name"), get_new_name(doc), force=True)

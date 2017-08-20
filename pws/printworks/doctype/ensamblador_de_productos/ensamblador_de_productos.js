@@ -140,7 +140,19 @@ frappe.ui.form.on('Ensamblador de Productos', {
 				frm.set_df_property(fieldname, "hidden", hide)
 				frm.set_df_property(fieldname + "_sb", "hidden", hide)
 			})
+
+			frm.trigger("show_hide_colores")
 		}
+	},
+	show_hide_colores: function(frm) {
+		frm.set_df_property("cantidad_tiro_proceso", "hidden", !pws.profiler.tiro)
+		frm.set_df_property("cantidad_tiro_pantone", "hidden", !pws.profiler.tiro)
+
+		frm.set_df_property("cantidad_proceso_retiro", "hidden", !pws.profiler.re_tiro)
+		frm.set_df_property("cantidad_pantone_retiro", "hidden", !pws.profiler.re_tiro)
+
+		
+		frm.set_df_property("colores_sb", "hidden", !pws.profiler.re_tiro && !pws.profiler.tiro)
 	},
 	fetch_the_profile_maker: function(frm) {
 		var method = "frappe.client.get"

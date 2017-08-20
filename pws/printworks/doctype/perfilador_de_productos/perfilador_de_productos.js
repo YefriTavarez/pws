@@ -6,8 +6,10 @@ frappe.provide("pws.utils")
 frappe.ui.form.on('Perfilador de Productos', {
 	refresh: function(frm) {
 		if ( !frm.is_new()) {
-			frm.trigger("add_buttons")
+			frm.trigger("add_buttons"), frm.trigger("re_tiro")
 		}
+
+		frm.trigger("tiene_respaldo")
 	},
 	onload_post_render: function(frm) {
 		if (frm.is_new()) {
@@ -24,6 +26,14 @@ frappe.ui.form.on('Perfilador de Productos', {
 	},
 	reset_form: function(frm) {
 		frm.trigger("clear_and_fill_tables")
+	},
+	re_tiro: function(frm) {
+		frm.set_value("tiro", true) 
+		frm.set_df_property("tiro", "read_only", !!frm.doc.re_tiro)
+	},
+	tiene_respaldo: function(frm) {
+		pws.utils.set_respaldo_materiales(frm)
+		frm.set_df_property("respaldo_sb", "hidden", !frm.doc.tiene_respaldo)
 	},
 	validate_duplicates: function(frm) {
 		var tables = [
@@ -103,7 +113,7 @@ $.extend(pws.utils, {
 
 		return found
 	}, 
-	"fill_table": function(frm, child_doctype, child_fieldname, fieldname ) {
+	"fill_table": function(frm, child_doctype, child_fieldname, fieldname, respaldo=undefined) {
 		frm.doc[child_fieldname] = new Array()
 
 		var method = "frappe.client.get_list"
@@ -115,6 +125,15 @@ $.extend(pws.utils, {
 				"enabled": "1"
 			},
 			"limit_page_length": 0
+		}
+
+		if (respaldo) {
+			$.extend(args, {
+				"filters": {
+					"enabled": "1",
+					"es_respaldo": "1"
+				}
+			})
 		}
 
 		var callback = function(response) {
@@ -150,5 +169,16 @@ $.extend(pws.utils, {
 				found_list.push(row[tablename])
 			}
 		})
+	},
+	set_respaldo_materiales: function(frm) {
+		var me = this
+
+		if (frm.doc.tiene_respaldo) {
+
+			me.fill_table(frm, "Material de Impresion", "respaldo_materiales", "materials", true)
+		} else {
+
+			frm.set_value("respaldo_materiales", new Array())
+		}
 	}
 })
