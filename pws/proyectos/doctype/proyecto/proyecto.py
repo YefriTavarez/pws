@@ -6,15 +6,17 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 
+from pws.api import s_sanitize, gut
+
 from frappe.model.mapper import get_mapped_doc as map_doc
 from frappe.model.naming import make_autoname as autoname
 
 class Proyecto(Document):
 	def __setup__(self):
-		self.make_difference()
+		pass
+		# self.make_difference()
 
 	def autoname(self):
-		from pws.api import s_sanitize, gut
 
 		name_sanitized = s_sanitize(self.project_type)
 
@@ -27,12 +29,32 @@ class Proyecto(Document):
 	def on_update(self):
 		self.sync_tasks()
 
+	def validate(self):
+		dirty_name = self.collect_names()
+
+		name_sanitized = s_sanitize(dirty_name)
+
+		self.title = name_sanitized.title()
+
+	def collect_names(self):
+		fields = ["project_type", "customer", "item", 
+			"project_name", "production_qty"]
+
+		return "{0}: {1} {2} ({3}) Cant. {4}".format(*[
+			self.get(field) for field in fields])
+
 	def create_project(self):
 		return map_doc("Plantilla de Proyecto", self.plantilla_de_proyecto, {
 			"Plantilla de Proyecto": {
 				"doctype": "Proyecto",
 				"field_map": {
 					"template_name": "project_name"
+				}
+			},
+			"Tarea de Plantilla": {
+				"doctype": "Tarea de Proyecto",
+				"field_map": {
+					# to do
 				}
 			}
 		}, self)
@@ -52,17 +74,17 @@ class Proyecto(Document):
 		for task in frappe.get_all("Tarea", ["name"], {"proyecto": self.name, "name": ("not in", task_names)}):
 			frappe.delete_doc("Tarea", task.name)
 
-	def make_difference(self):
-		task_names = []
+	# def make_difference(self):
+	# 	task_names = []
 
-		for task in frappe.get_all("Tarea", ["name"], { "proyecto": self.name }):
-			task_names.append(task.name)
+	# 	for task in frappe.get_all("Tarea", ["name"], { "proyecto": self.name }):
+	# 		task_names.append(task.name)
 
-		for task in self.get_project_tasks():
-			if not task.task_id in task_names:
-				frappe.delete_doc("Tarea de Proyecto", task.name)
+	# 	for task in self.get_project_tasks():
+	# 		if not task.task_id in task_names:
+	# 			frappe.delete_doc("Tarea de Proyecto", task.name)
 
-		frappe.db.commit() 
+	# 	frappe.db.commit() 
 
 	def get_project_tasks(self):
 		return frappe.get_all("Tarea de Proyecto", { 

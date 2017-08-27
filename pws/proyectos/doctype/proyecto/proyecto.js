@@ -4,7 +4,16 @@
 frappe.provide("pws.prompt")
 frappe.ui.form.on('Proyecto', {
 	setup: function(frm) {
-		frm.add_fetch("item", "description", "notes")
+
+		var link_field = "item"
+		var fields_dict = {
+			"description": "notes",
+			 "item_group": "item_name"
+		}
+
+		$.each(fields_dict, function(source_field, target_field) {
+			frm.add_fetch(link_field, source_field, target_field)
+		})
 	},
 	refresh: function(frm) {
 		var events = ["add_custom_buttons", "set_read_only_table"]
@@ -17,15 +26,32 @@ frappe.ui.form.on('Proyecto', {
 		frm.trigger("setup_prompt")
 	},
 	onload_post_render: function(frm) {
-		frm.trigger("show_prompt")
+		if ( !(frm.doc.tasks || []).length) {
+			frm.trigger("show_prompt")
 
-		if (frm.is_new()) {
+
+		} else if (frm.is_new()) {
 			frm.trigger("set_todays_date_as_start_date")
 		}
 	},
 	expected_start_date: function(frm) {
 		var next_month = frappe.datetime.add_months(frm.doc.expected_start_date, 1)
+		var exp_start_date = frm.doc.expected_start_date
+
+		$.map(frm.doc.tasks, function(row) {
+			row.start_date = moment(exp_start_date + " 08:00:00", "YYYY-MM-DD hh:mm:ss")
+				.format("YYYY-MM-DD hh:mm:ss")
+
+			row.end_date = moment(row.start_date, "YYYY-MM-DD hh:mm:ss")
+				.add(row.max_time, row.time_unit)
+				.format("YYYY-MM-DD hh:mm:ss")
+		})
+
 		frm.set_value("expected_end_date", next_month)
+		refresh_field("tasks")
+	},
+	expected_end_date: function(frm) {
+		// to do
 	},
 	add_custom_buttons: function(frm) {
 		if (frm.is_new()) {
@@ -50,6 +76,7 @@ frappe.ui.form.on('Proyecto', {
 
 			$.map(fields, function(field) {
 				frm.set_df_property(field, "read_only", !has_permission, frm.docname, "tasks")
+
 			})
 		}
 	},
@@ -73,9 +100,6 @@ frappe.ui.form.on('Proyecto', {
 		frm.set_value("expected_start_date", frappe.datetime.get_today())
 	},
 	show_prompt: function(frm) {
-		if ( !!(frm.doc.tasks || []).length) {
-			return // do not continue, as the user has already chose the template
-		}
 
 		// provide with namespace flags
 		frappe.provide("pws.flags")
@@ -93,6 +117,7 @@ frappe.ui.form.on('Proyecto', {
 					frm.doc.plantilla_de_proyecto  = data.project_template
 
 					frm.call("create_project", "args", function(response) {
+						frm.trigger("set_todays_date_as_start_date")
 						frm.refresh()
 					})
 

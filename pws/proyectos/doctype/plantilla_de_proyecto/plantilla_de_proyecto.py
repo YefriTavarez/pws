@@ -19,6 +19,12 @@ class PlantilladeProyecto(Document):
 				"field_map": {
 					"template_name": "project_name"
 				}
+			},
+			"Tarea de Plantilla": {
+				"doctype": "Tarea de Proyecto",
+				"field_map": {
+					# to do
+				}
 			}
 		}, frappe.new_doc("Proyecto"))
 

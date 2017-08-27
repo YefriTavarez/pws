@@ -52,12 +52,12 @@ frappe.ui.form.on('Plantilla de Proyecto', {
 
 		main.find("[data-fieldname=tasks]")
 			.find("[data-fieldname=title]").css({
-				"width": "60%"
+				"width": "50%"
 			})
 
 		main.find("[data-fieldname=tasks]")
 			.find("[data-fieldname=user]").css({
-				"width": "20%"
+				"width": "33.3333%"
 			})
 	}
 })
