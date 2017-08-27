@@ -1,3 +1,8 @@
-.module-link.active[data-name=Projects] {
+.module-link[data-name=Projects] {
 	display: none;
+}
+
+::-webkit-scrollbar {
+    width: 0px;  /* remove scrollbar space */
+    background: transparent;  /* optional: just make scrollbar invisible */
 }

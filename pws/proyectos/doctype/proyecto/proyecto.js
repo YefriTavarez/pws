@@ -7,7 +7,11 @@ frappe.ui.form.on('Proyecto', {
 		frm.add_fetch("item", "description", "notes")
 	},
 	refresh: function(frm) {
-		frm.trigger("add_custom_buttons")
+		var events = ["add_custom_buttons", "set_read_only_table"]
+
+		$.map(events, function(event) {
+			frm.trigger(event)
+		})
 	},
 	onload: function(frm) {
 		frm.trigger("setup_prompt")
@@ -35,6 +39,19 @@ frappe.ui.form.on('Proyecto', {
 	},
 	load_from_template: function(frm) {
 		frm.trigger("show_prompt")
+	},
+	set_read_only_table: function(frm) {
+		var has_permission = frappe.user.has_role("Supervisor de Proyectos")
+
+		if ( !has_permission) {
+			frm.set_df_property("tasks", "read_only", !has_permission)
+
+			var fields = ["title", "user", "start_date", "end_date", "task_weight", "description"]
+
+			$.map(fields, function(field) {
+				frm.set_df_property(field, "read_only", !has_permission, frm.docname, "tasks")
+			})
+		}
 	},
 	setup_prompt: function(frm) {
 		var fields = {
@@ -73,11 +90,9 @@ frappe.ui.form.on('Proyecto', {
 				var data = pws.prompt.get_values()
 				
 				if (data) {
-					var args = {
-						"plantilla_de_proyecto": data.project_template
-					}
+					frm.doc.plantilla_de_proyecto  = data.project_template
 
-					frm.call("create_project", args, function(response) {
+					frm.call("create_project", "args", function(response) {
 						frm.refresh()
 					})
 
@@ -91,6 +106,20 @@ frappe.ui.form.on('Proyecto', {
 			// clear the field if the first_completed flag is set
 			pws.flags.first_completed && pws.prompt.get_field("project_template").$input.val("")
 			pws.prompt.show()
+		}
+	}
+})
+
+frappe.ui.form.on("Tarea de Proyecto", {
+	status: function(frm, cdt, cdn) {
+		var row = frappe.get_doc(cdt, cdn)
+		var username = frappe.user.name
+
+		var has_permission = frappe.user.has_role("Supervisor de Proyectos")
+		if ( ! (has_permission || row.user == username)) {
+			frm.reload_doc()
+
+			frappe.throw("¡No puede actualizar el estado de la tarea de otro usuario!")
 		}
 	}
 })

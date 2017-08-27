@@ -7,10 +7,22 @@ import frappe
 from frappe.model.document import Document
 
 from frappe.model.mapper import get_mapped_doc as map_doc
+from frappe.model.naming import make_autoname as autoname
 
 class Proyecto(Document):
 	def __setup__(self):
 		self.make_difference()
+
+	def autoname(self):
+		from pws.api import s_sanitize, gut
+
+		name_sanitized = s_sanitize(self.project_type)
+
+		first_two = gut(name_sanitized, size=3)
+
+		naming_serie = "{0}-.#####".format(*first_two)
+
+		self.name = autoname(naming_serie)
 	
 	def on_update(self):
 		self.sync_tasks()
@@ -37,39 +49,39 @@ class Proyecto(Document):
 			task.db_update()
 
 		# delete
-		for task in frappe.get_all("Task", ["name"], {"proyecto": self.name, "name": ("not in", task_names)}):
-			frappe.delete_doc("Task", task.name)
+		for task in frappe.get_all("Tarea", ["name"], {"proyecto": self.name, "name": ("not in", task_names)}):
+			frappe.delete_doc("Tarea", task.name)
 
 	def make_difference(self):
 		task_names = []
 
-		for task in frappe.get_all("Task", ["name"], { "proyecto": self.name }):
+		for task in frappe.get_all("Tarea", ["name"], { "proyecto": self.name }):
 			task_names.append(task.name)
 
 		for task in self.get_project_tasks():
 			if not task.task_id in task_names:
-				frappe.delete_doc("Project Task", task.name)
+				frappe.delete_doc("Tarea de Proyecto", task.name)
 
 		frappe.db.commit() 
 
 	def get_project_tasks(self):
-		return frappe.get_all("Project Task", { 
+		return frappe.get_all("Tarea de Proyecto", { 
 			"parent": self.name 
 		}, ["task_id", "name"])
 
 	def on_trash(self):
-		tasks = frappe.get_all("Task", {
+		tasks = frappe.get_all("Tarea", {
 			"proyecto": self.name 
 		}, ["name"])
 
 		for task in tasks:
-			frappe.delete_doc("Task", task.name, force=True)
+			frappe.delete_doc("Tarea", task.name, force=True)
 
 def sync_task(task, project_name):
-	doc = frappe.new_doc("Task")
+	doc = frappe.new_doc("Tarea")
 	
-	if frappe.get_value("Task", task.task_id):
-		doc = frappe.get_doc("Task", task.task_id)
+	if frappe.get_value("Tarea", task.task_id):
+		doc = frappe.get_doc("Tarea", task.task_id)
 
 	doc.update({
 		"proyecto": project_name,

@@ -86,14 +86,11 @@ after_install = "pws.install.after_install.add_records"
 # ---------------
 # Hook on document methods and events
 
-doc_events = {
-	"Proyecto": {
-		"autoname": "pws.api.project_autoname"
-	},
-	"Task": {
-		"after_insert": "pws.api.assign_to"
-	}
-}
+# doc_events = {
+# 	"doctype": {
+# 		"after_insert": "pws.api.assign_to"
+# 	}
+# }
 
 # Scheduled Tasks
 # ---------------
