@@ -1,76 +1,62 @@
+# -*- coding: utf-8 -*-
+# Copyright (c) 2017, Yefri Tavarez and contributors
+# For license information, please see license.txt
+
 import frappe
+import pws.utils
 
-def product_type_query(doctype, txt, searchfield, start, page_len, filters):
-	item_group_list = frappe.get_list("Item Group", {
-		"is_group": "0",
-		"parent_item_group": filters.get("category")
-	})
+from frappe.model.naming import make_autoname as autoname
 
-	product_type_list = []
-	for item_group in item_group_list:
-		_filters = {
-			"name": ["like", "%{0}%".format(txt if txt else item_group.name)]
-		}
+def s_sanitize(string):
+	"""Remove the most common special caracters"""
 
-		product_type = frappe.get_value("Perfilador de Productos", _filters, ["name"])
+	s_sanitized = string
 
-		if product_type:
-			product_type_list.append([product_type])
 
-	return product_type_list
+def s_strip(string):
+	"""Clean and convert a string into a valid variable name"""
 
-def ens_materials_query(doctype, txt, searchfield, start, page_len, filters):
-	material_list = frappe.get_list("Material de Impresion Items", {
-		"parent": filters.get("perfilador")
-	}, ["materials"])
+	# remove blank spaces
+	s_word = string.replace(" ", "")
 
-	return [[row.materials] for row in material_list]
+	# convert to lower case
+	s_lower = s_word.lower()
+	
+	# remove most common special caracters
+	s_sanitized = s_sanitize(s_lower)
 
-def ens_control_query(doctype, txt, searchfield, start, page_len, filters):
-	control_list = frappe.get_list("Opciones de Control Items", {
-		"parent": filters.get("perfilador")
-	}, ["opciones_de_control"])
+	# convert to upper case
+	s_upper = s_sanitized.upper()
 
-	return [[row.opciones_de_control] for row in control_list]
+	return s_upper
 
-def ens_corte_query(doctype, txt, searchfield, start, page_len, filters):
-	corte_list = frappe.get_list("Opciones de Corte Items", {
-		"parent": filters.get("perfilador")
-	}, ["opciones_de_corte"])
+def s_hash(string):
+	return pws.utils.s_hash(string)
 
-	return [[row.opciones_de_corte] for row in corte_list]
+def gut(string, size=2):
+	return [ word[:size]
+		for part in string.split("-") 
+		for word in part.split()
+	]
 
-def ens_empalme_query(doctype, txt, searchfield, start, page_len, filters):
-	empalme_list = frappe.get_list("Opciones de Empalme Items", {
-		"parent": filters.get("perfilador")
-	}, ["opciones_de_empalme"])
+def project_autoname(project, event):
+	name_sanitized = s_sanitize(project.project_name)
 
-	return [[row.opciones_de_empalme] for row in empalme_list]
+	first_two = gut(name_sanitized, size=3)
 
-def ens_plegado_query(doctype, txt, searchfield, start, page_len, filters):
-	plegado_list = frappe.get_list("Opciones de Plegado Items", {
-		"parent": filters.get("perfilador")
-	}, ["opciones_de_plegado"])
+	naming_serie = "{0}-.#####".format(*first_two)
 
-	return [[row.opciones_de_plegado] for row in plegado_list]
+	project.name = autoname(naming_serie)
 
-def ens_proteccion_query(doctype, txt, searchfield, start, page_len, filters):
-	proteccion_list = frappe.get_list("Opciones de Proteccion Items", {
-		"parent": filters.get("perfilador")
-	}, ["opciones_de_proteccion"])
+	# project.db_update()
 
-	return [[row.opciones_de_proteccion] for row in proteccion_list]
+def assign_to(doc, event):
+	from frappe.desk.form.assign_to import add as assign
 
-def ens_utilidad_query(doctype, txt, searchfield, start, page_len, filters):
-	utilidad_list = frappe.get_list("Opciones de Utilidad Items", {
-		"parent": filters.get("perfilador")
-	}, ["opciones_de_utilidad"])
-
-	return [[row.opciones_de_utilidad] for row in utilidad_list]
-
-def ens_textura_query(doctype, txt, searchfield, start, page_len, filters):
-	textura_list = frappe.get_list("Opciones de Textura Items", {
-		"parent": filters.get("perfilador")
-	}, ["opciones_de_textura"])
-
-	return [[row.opciones_de_textura] for row in textura_list]
+	if doc.user:
+		assign({
+			"assign_to": doc.user,
+			"doctype": doc.doctype,
+			"name": doc.name,
+			"description": doc.subject
+		})

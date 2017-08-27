@@ -14,6 +14,10 @@ def get_data():
 					"type": "doctype",
 					"name": "Ensamblador de Productos",
 				},
+				{
+					"type": "doctype",
+					"name": "Proyecto",
+				},
 			]
 		},
 		{
@@ -76,6 +80,20 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Opciones de Textura",
+				},
+			]
+		},
+		{
+			"label": _("Configuraciones"),
+			"items": [
+				{
+					"type": "doctype",
+					"name": "Configuracion General",
+					"label": "Panel de Control",
+				},
+				{
+					"type": "doctype",
+					"name": "Plantilla de Proyecto"
 				},
 			]
 		},

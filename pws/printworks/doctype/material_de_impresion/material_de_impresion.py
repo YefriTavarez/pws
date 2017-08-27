@@ -6,20 +6,25 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 
+import pws.api
+
 class MaterialdeImpresion(Document):
 	def autoname(self):
 		self.name = get_new_name(self)
 
 def get_new_name(material_doc):
-	name = "{0}".format(material_doc.get("nombre").replace(" ", "-"))
+	name_sanitized = pws.api.s_sanitize(material_doc.get("nombre"))
+	
+	new_name = "{0}".format(name_sanitized)
 
 	if material_doc.get("calibre"):
-		name = "{0}-{1}".format(name, material_doc.get("calibre"))
+		new_name = "{0} {1}".format(new_name, material_doc.get("calibre"))
 
 	if material_doc.get("cara"):
-		name = "{0}-{1}c".format(name, material_doc.get("caras"))
+		new_name = "{0} {1}c".format(new_name, material_doc.get("caras"))
 
-	return name.upper()
+	# return as title ex. the egg pla
+	return new_name.title()
 
 @frappe.whitelist()
 def rename_doc(frm_doc):

@@ -1,0 +1,3 @@
+.module-link.active[data-name=Projects] {
+	display: none;
+}

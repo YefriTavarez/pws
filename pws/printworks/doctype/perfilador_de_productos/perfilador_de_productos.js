@@ -6,7 +6,7 @@ frappe.provide("pws.utils")
 frappe.ui.form.on('Perfilador de Productos', {
 	refresh: function(frm) {
 		if ( !frm.is_new()) {
-			frm.trigger("add_buttons"), frm.trigger("re_tiro")
+			frm.trigger("add_buttons")
 		}
 
 		frm.trigger("tiene_respaldo")
@@ -15,6 +15,8 @@ frappe.ui.form.on('Perfilador de Productos', {
 		if (frm.is_new()) {
 			frm.trigger("clear_and_fill_tables")			
 		}
+
+		frm.trigger("re_tiro")
 	},
 	validate: function(frm) {
 		frm.trigger("validate_duplicates")
@@ -28,11 +30,19 @@ frappe.ui.form.on('Perfilador de Productos', {
 		frm.trigger("clear_and_fill_tables")
 	},
 	re_tiro: function(frm) {
-		frm.set_value("tiro", true) 
+		if (frm.is_new()) {
+
+			frm.set_value("tiro", true) 
+		}
+
 		frm.set_df_property("tiro", "read_only", !!frm.doc.re_tiro)
 	},
 	tiene_respaldo: function(frm) {
-		pws.utils.set_respaldo_materiales(frm)
+		if (frm.doc.tiene_respaldo) {
+
+			pws.utils.set_respaldo_materiales(frm)
+		}
+		
 		frm.set_df_property("respaldo_sb", "hidden", !frm.doc.tiene_respaldo)
 	},
 	validate_duplicates: function(frm) {

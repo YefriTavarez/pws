@@ -4,44 +4,144 @@
 
 from __future__ import unicode_literals
 import frappe
+import pws.api
+
 from frappe.model.document import Document
+from frappe.model.naming import make_autoname as autoname
+from frappe.utils import flt
 
 class EnsambladordeProductos(Document):
 	def autoname(self):
-		array = []
+		array = pws.api.gut(
+			pws.api.s_sanitize(
+				self.perfilador_de_productos
+			)
+		)
 
-		fields = [
-			self.perfilador_de_productos,
-			self.materials,
-			self.opciones_de_control,
-			self.opciones_de_corte,
-			self.opciones_de_empalme,
-			self.opciones_de_plegado,
-			self.opciones_de_proteccion,
-			self.opciones_de_utilidad,
-			self.opciones_de_textura
+		naming_serie = "{0}-.####".format(
+			"".join(array))
+
+		self.name = autoname(naming_serie)
+
+	def validate(self):
+		new_hash = self.make_new_hash()
+
+		self.hash = new_hash.upper()
+
+		self.after_validate()
+
+	def after_validate(self):
+		number_fields = [
+			"cantidad_tiro_proceso",
+			"cantidad_tiro_pantone",
+			"cantidad_proceso_retiro",
+			"cantidad_pantone_retiro"
 		]
 
-		for key in fields:
-			if key:
-				array += gut(key)
+		for field in number_fields:
+			self.set(field, int(self.get(field)))
 
-		new_name = "".join(array).upper()
+		self.create_item()
 
-		exists = frappe.get_value("Ensamblador de Productos", new_name)
+	def make_new_hash(self):
+		array = ["".join(
+			gut(self.get(key)))
+			for key in self.get_fields() 
+		if self.get(key)] 
 
-		if exists:
-			frappe.throw("""Ensamblador 
-				<a href='/desk#Form/Ensamblador de Productos/{0}'>{0}</a> ya existe.""".format(
-					new_name))
 
-		self.name = new_name
+		pre_hash = "".join(array).upper()
+
+		pre_hash_with_textures = "{0}{1}".format(pre_hash,
+			self.get_textura_names())
+
+		new_hash = pws.api.s_sanitize(
+			u"{0}".format(pre_hash_with_textures))
+
+		# new_hash = pws.api.s_hash(pre_sanitized)
+
+		exists = frappe.get_value("Ensamblador de Productos", {
+			"hash": new_hash.upper()
+		}, ["name"])
+
+		if exists and not new_hash.upper() == self.hash:
+			frappe.throw("""Ensamblador <a href='/desk#Form/Ensamblador de Productos/{0}'>{0}</a> ya existe."""
+				.format(exists))
+
+		return new_hash
+
+	def get_textura_names(self):
+		array = ""
+
+		for textura in self.opciones_de_textura:
+			array += "".join(
+				gut(textura.opciones_de_textura))
+
+		return "".join(array)
+
+	def get_fields(self):
+		return [
+			"dimension",
+			"materials",
+			"perfilador_de_productos",
+			"opciones_de_control",
+			"opciones_de_corte",
+			"opciones_de_empalme",
+			"opciones_de_plegado",
+			"opciones_de_proteccion",
+			"opciones_de_utilidad",
+			"cantidad_tiro_proceso",
+			"cantidad_tiro_pantone",
+			"cantidad_proceso_retiro",
+			"cantidad_pantone_retiro",
+		]
+
+	def create_item(self):
+		# new item allocated
+		item = frappe.new_doc("Item")
+
+		# alias
+		self.perfilador = self.perfilador_de_productos
+
+		# load configuration from the control panel
+		products_are_stock_items = frappe.db.get_single_value("Configuracion General", 
+			"products_are_stock_items")
+
+		# item group for the profiler
+		item_group = frappe.get_value("Perfilador de Productos", 
+			self.perfilador, "item_group")
+
+		# if the item exists
+		if frappe.get_value("Item", self.name):
+			# let's load it and use it
+			item = frappe.get_doc("Item", self.name)
+
+		item.update({
+			"item_code": self.name,
+			"item_name": self.name,
+			"item_group": item_group,
+			"description": self.get_self_description(),
+			"is_stock_item": products_are_stock_items
+		})
+
+		item.save()
+
+	def get_self_description(self):
+		description = ""
+
+		for field in self.get_fields():
+			if self.get(field):
+				description += "<b>{1}</b>: {0}<br>".format(self.get(field), 
+					self.meta.get_field(field).label)
+
+		return description
+
+	def on_trash(self):
+		frappe.delete_doc_if_exists("Item", self.hash)
+
 
 def gut(string):
-	return [ choose(word)
+	return [ word
 		for part in string.split("-") 
 		for word in part.split()
 	]
-
-def choose(value):
-	return value if value.isdigit() else value[0]

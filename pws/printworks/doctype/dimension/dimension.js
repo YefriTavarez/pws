@@ -7,6 +7,24 @@ frappe.ui.form.on('Dimension', {
 
 		frm.trigger("set_queries")
 	},
+	after_save: function(frm) {
+		var method = "pws.rename_doc"
+		var args = {
+			"doctype": frm.doctype,
+			"name": frm.docname
+		}
+
+		var callback = function(response) {
+			var new_dimension = response.message
+
+			if (new_dimension) {
+
+				frappe.set_route("Form", frm.doctype, new_dimension)
+			}
+		}
+
+		frappe.call({"method": method, "args": args, "callback" : callback })
+	},
 	set_queries: function(frm) {
 		var triggers = [
 			"set_category_query",

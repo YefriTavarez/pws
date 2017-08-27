@@ -6,6 +6,7 @@ frappe.provide("pws")
 frappe.ui.form.on('Ensamblador de Productos', {
 	refresh: function(frm) {
 		frm.trigger("set_queries")
+		frm.trigger("add_custom_buttons")
 	},
 	onload_post_render: function(frm) {
 		frm.trigger("perfilador_de_productos")
@@ -32,9 +33,28 @@ frappe.ui.form.on('Ensamblador de Productos', {
 			frm.trigger("fetch_the_profile_maker")
 		}
 	},
+	add_custom_buttons: function(frm) {
+		var events = [
+			!frm.is_new() && "add_view_item_button"
+		]
+
+		$.each(events, function(idx, event) {
+			frm.trigger(event)
+		})
+	},
+	set_dimension_query: function(frm) {
+		frm.set_query("dimension", function() {
+			var query = "pws.queries.ens_dimension_query"
+			var filters = {
+				"perfilador": frm.doc.perfilador_de_productos
+			}
+
+			return { "query": query, "filters": filters }
+		})
+	},	
 	set_material_query: function(frm) {
 		frm.set_query("materials", function() {
-			var query = "pws.api.ens_materials_query"
+			var query = "pws.queries.ens_materials_query"
 			var filters = {
 				"perfilador": frm.doc.perfilador_de_productos
 			}
@@ -44,7 +64,7 @@ frappe.ui.form.on('Ensamblador de Productos', {
 	},
 	set_control_query: function(frm) {
 		frm.set_query("opciones_de_control", function() {
-			var query = "pws.api.ens_control_query"
+			var query = "pws.queries.ens_control_query"
 			var filters = {
 				"perfilador": frm.doc.perfilador_de_productos
 			}
@@ -54,7 +74,7 @@ frappe.ui.form.on('Ensamblador de Productos', {
 	},
 	set_corte_query: function(frm) {
 		frm.set_query("opciones_de_corte", function() {
-			var query = "pws.api.ens_corte_query"
+			var query = "pws.queries.ens_corte_query"
 			var filters = {
 				"perfilador": frm.doc.perfilador_de_productos
 			}
@@ -64,7 +84,7 @@ frappe.ui.form.on('Ensamblador de Productos', {
 	},
 	set_empalme_query: function(frm) {
 		frm.set_query("opciones_de_empalme", function() {
-			var query = "pws.api.ens_empalme_query"
+			var query = "pws.queries.ens_empalme_query"
 			var filters = {
 				"perfilador": frm.doc.perfilador_de_productos
 			}
@@ -74,7 +94,7 @@ frappe.ui.form.on('Ensamblador de Productos', {
 	},
 	set_plegado_query: function(frm) {
 		frm.set_query("opciones_de_plegado", function() {
-			var query = "pws.api.ens_plegado_query"
+			var query = "pws.queries.ens_plegado_query"
 			var filters = {
 				"perfilador": frm.doc.perfilador_de_productos
 			}
@@ -84,7 +104,7 @@ frappe.ui.form.on('Ensamblador de Productos', {
 	},
 	set_proteccion_query: function(frm) {
 		frm.set_query("opciones_de_proteccion", function() {
-			var query = "pws.api.ens_proteccion_query"
+			var query = "pws.queries.ens_proteccion_query"
 			var filters = {
 				"perfilador": frm.doc.perfilador_de_productos
 			}
@@ -94,7 +114,7 @@ frappe.ui.form.on('Ensamblador de Productos', {
 	},
 	set_utilidad_query: function(frm) {
 		frm.set_query("opciones_de_utilidad", function() {
-			var query = "pws.api.ens_utilidad_query"
+			var query = "pws.queries.ens_utilidad_query"
 			var filters = {
 				"perfilador": frm.doc.perfilador_de_productos
 			}
@@ -103,8 +123,8 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		})
 	},
 	set_textura_query: function(frm) {
-		frm.set_query("opciones_de_textura", function() {
-			var query = "pws.api.ens_textura_query"
+		frm.set_query("opciones_de_textura", "opciones_de_textura", function() {
+			var query = "pws.queries.ens_textura_query"
 			var filters = {
 				"perfilador": frm.doc.perfilador_de_productos
 			}
@@ -112,14 +132,13 @@ frappe.ui.form.on('Ensamblador de Productos', {
 			return { "query": query, "filters": filters }
 		})
 	},
-	set_dimension_query: function(frm) {
-		frm.set_query("dimension", function() {
-			var filters = {
-				"product_type": frm.doc.perfilador_de_productos
-			}
-
-			return { "filters": filters }
+	add_view_item_button: function(frm) {
+		frm.add_custom_button("Ver Item", function() {
+			frm.trigger("view_item")
 		})
+	},
+	view_item: function(frm) {
+		frappe.set_route(["Form", "Item", frm.docname])
 	},
 	hide_empty_fields: function(frm) {
 		if (pws.profiler) {

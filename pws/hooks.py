@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from . import __version__ as app_version
 
 app_name = "pws"
-app_title = "Print Works"
+app_title = "PRINTWORKS"
 app_publisher = "Yefri Tavarez"
 app_description = "An application for customizing some ERPNext features."
 app_icon = "octicon octicon-dashboard"
@@ -12,7 +12,11 @@ app_email = "yefritavarez@gmail.com"
 app_license = "General Public License, v3"
 
 # fixtures
-fixtures = ["Custom Script", "Custom Field", "Item Group"]
+fixtures = [
+	"Custom Script", 
+	"Custom Field", 
+	"Item Group", 
+]
 
 # Includes in <head>
 # ------------------
@@ -58,7 +62,7 @@ app_include_js = "/assets/pws/js/pws.js"
 # ------------
 
 # before_install = "pws.install.before_install"
-# after_install = "pws.install.after_install"
+after_install = "pws.install.after_install.add_records"
 
 # Desk Notifications
 # ------------------
@@ -82,13 +86,14 @@ app_include_js = "/assets/pws/js/pws.js"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-#	}
-# }
+doc_events = {
+	"Proyecto": {
+		"autoname": "pws.api.project_autoname"
+	},
+	"Task": {
+		"after_insert": "pws.api.assign_to"
+	}
+}
 
 # Scheduled Tasks
 # ---------------
