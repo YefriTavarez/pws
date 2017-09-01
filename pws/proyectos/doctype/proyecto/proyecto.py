@@ -3,10 +3,12 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
-import frappe
-from frappe.model.document import Document
+
+import frappe, json
 
 from pws.api import s_sanitize, gut
+from frappe.model.document import Document
+from frappe.utils.file_manager import save_file
 
 from frappe.model.mapper import get_mapped_doc as map_doc
 from frappe.model.naming import make_autoname as autoname
@@ -29,6 +31,17 @@ class Proyecto(Document):
 	def on_update(self):
 		self.sync_tasks()
 
+		pending_task = False
+
+		for task in self.tasks:
+			if not task.status == "Closed":
+				pending_task = True
+
+		if not pending_task:
+			self.status = "Completed"
+
+		self.db_update()
+
 	def validate(self):
 		dirty_name = self.collect_names()
 
@@ -37,13 +50,14 @@ class Proyecto(Document):
 		self.title = name_sanitized.title()
 
 	def collect_names(self):
-		fields = ["project_type", "customer", "item", 
+		fields = ["project_type", "customer", "item_name", 
 			"project_name", "production_qty"]
 
 		return "{0}: {1} {2} ({3}) Cant. {4}".format(*[
 			self.get(field) for field in fields])
 
 	def create_project(self):
+		self.set("tasks", [])
 		return map_doc("Plantilla de Proyecto", self.plantilla_de_proyecto, {
 			"Plantilla de Proyecto": {
 				"doctype": "Proyecto",
@@ -91,6 +105,7 @@ class Proyecto(Document):
 			"parent": self.name 
 		}, ["task_id", "name"])
 
+
 	def on_trash(self):
 		tasks = frappe.get_all("Tarea", {
 			"proyecto": self.name 
@@ -98,6 +113,17 @@ class Proyecto(Document):
 
 		for task in tasks:
 			frappe.delete_doc("Tarea", task.name, force=True)
+
+@frappe.whitelist()
+def attach_file(doctype, docname, filedata):
+	if not filedata: return
+
+	fd_json = json.loads(filedata)
+	fd_list = list(fd_json["files_data"])
+
+	for fd in fd_list:
+		filedoc = save_file(fd["filename"], fd["dataurl"], 
+			doctype, docname, decode=True, is_private=True)
 
 def sync_task(task, project_name):
 	doc = frappe.new_doc("Tarea")

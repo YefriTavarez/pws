@@ -10,6 +10,10 @@ def get_data():
 					"type": "doctype",
 					"name": "Proyecto",
 				},
+				{
+					"type": "doctype",
+					"name": "Tarea",
+				},
 			]
 		},
 		{
@@ -17,16 +21,17 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
-					"name": "Tarea",
-				},
-				{
-					"type": "doctype",
 					"name": "Plantilla de Proyecto",
 				},
 				{
 					"type": "doctype",
 					"name": "Tipo de Proyecto",
-				}
+				},
+				{
+					"type": "doctype",
+					"name": "Tipo de Adjunto",
+				},
+
 			]
 		},
 		{

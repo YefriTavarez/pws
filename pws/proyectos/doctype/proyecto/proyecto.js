@@ -16,11 +16,17 @@ frappe.ui.form.on('Proyecto', {
 		})
 	},
 	refresh: function(frm) {
-		var events = ["add_custom_buttons", "set_read_only_table"]
+		var events = ["add_custom_buttons", 
+			"set_read_only_table", "set_table_indicators"]
 
 		$.map(events, function(event) {
 			frm.trigger(event)
 		})
+
+		frm.$wrapper.find("a.add-attachment").off()
+			.on("click", function() {
+				frm.trigger("new_attachment")
+			})
 	},
 	onload: function(frm) {
 		frm.trigger("setup_prompt")
@@ -28,8 +34,6 @@ frappe.ui.form.on('Proyecto', {
 	onload_post_render: function(frm) {
 		if ( !(frm.doc.tasks || []).length) {
 			frm.trigger("show_prompt")
-
-
 		} else if (frm.is_new()) {
 			frm.trigger("set_todays_date_as_start_date")
 		}
@@ -56,6 +60,8 @@ frappe.ui.form.on('Proyecto', {
 	add_custom_buttons: function(frm) {
 		if (frm.is_new()) {
 			frm.trigger("add_load_from_template_button")
+		} else {
+			// frm.trigger("add_new_attachments_button")
 		}
 	},
 	add_load_from_template_button: function(frm) {
@@ -63,8 +69,51 @@ frappe.ui.form.on('Proyecto', {
 			frm.trigger("load_from_template")
 		}, "Desde")
 	},
+	add_new_attachments_button: function(frm) {
+		frm.add_custom_button("Nuevo Adjunto", function() {
+			frm.trigger("new_attachment")
+		})
+	},
 	load_from_template: function(frm) {
 		frm.trigger("show_prompt")
+	},
+	set_table_indicators: function(frm) {
+		frm.page.body.find("[data-fieldname=tasks]")
+			
+			.find(".grid-body")
+
+			.find(".grid-row")
+
+			.each(function(idx, html_row) {
+				var row = frappe.get_doc("Tarea de Proyecto", $(html_row).attr("data-name"))
+
+				if (row) {
+					var colors = {
+						"Closed": "green",
+						"Open": "orange",
+						"Pending Review": "yellow",
+						"Working": "blue",
+						"Cancelled": "grey",
+						"Delayed": "red"
+					}
+
+					var status = row.status
+					if (status == "Open" || status == "Pending Review" || status == "Working") {
+						if (moment().format("YYYY-MM-DD hh:mm:ss") > row.end_date) {
+							status = "Delayed"
+						}
+					}
+
+					$(this).find("[data-fieldname=title]")
+						.find(".static-area.ellipsis")
+					.find("span").remove()
+
+					$(this).find("[data-fieldname=title]")
+						.find(".static-area.ellipsis")
+					.prepend(__("<span title=\"{1}\" class=\"indicator {0}\"></span>", 
+						[colors[status], status]))
+				}
+			})
 	},
 	set_read_only_table: function(frm) {
 		var has_permission = frappe.user.has_role("Supervisor de Proyectos")
@@ -132,6 +181,53 @@ frappe.ui.form.on('Proyecto', {
 			pws.flags.first_completed && pws.prompt.get_field("project_template").$input.val("")
 			pws.prompt.show()
 		}
+	}, 
+	new_attachment: function(frm) {
+		frappe.provide("pws.ui.current_dialog")
+
+		var dialog = pws.ui.get_upload_dialog({
+			"customer": frm.doc.customer,
+			"project_name": frm.doc.project_name,
+			"item_name": frm.doc.item_name,
+			"production_qty": frm.doc.production_qty
+		})
+	
+		var btn = dialog.set_primary_action(__("Adjuntar"), function() {
+			var filedata = $('#select_files').prop('filedata')
+			var server_module_name = frappe.model.get_server_module_name(frm.doctype)
+			var method = __("{0}.attach_file", [server_module_name])
+
+			if ( ! filedata) {
+				frappe.throw("¡Debe seleccionar al menos un archivo!")
+			}
+
+			var args = {
+				"filedata": filedata,
+				"doctype": frm.doctype,
+				"docname": frm.docname
+			}
+
+			var callback = function(response) {
+				frappe.show_progress("Subiendo archivo", 2, 2)
+
+				setTimeout(function() {
+					if (response.exec) {
+						frappe.msgprint("¡Hubo un problema mientras se cargaba el archivo!")
+					} else {
+						frm.reload_doc()
+					}
+
+					frappe.hide_progress()
+				}, 999)
+			}
+
+			frappe.show_progress("Subiendo archivo", 1.5, 2)
+			frappe.call({ "method": method, "args": args, "callback": callback })
+			
+			dialog.hide()
+		})
+
+		pws.ui.current_dialog = dialog
 	}
 })
 
@@ -146,5 +242,25 @@ frappe.ui.form.on("Tarea de Proyecto", {
 
 			frappe.throw("¡No puede actualizar el estado de la tarea de otro usuario!")
 		}
+
+		frm.trigger("set_table_indicators")
+	},
+	edit_task: function(frm, cdt, cdn) {
+		var row = frappe.get_doc(cdt, cdn)
+
+		frappe.set_route(["Form", "Tarea", row.task_id])
+	},
+	tasks_add: function(frm, cdt, cdn) {
+		frm.trigger("set_table_indicators")
+	},
+	tasks_move: function(frm, cdt, cdn) {
+		setTimeout(function() { 
+			frm.trigger("set_table_indicators") 
+		}, 99)
+	},
+	tasks_remove: function(frm, cdt, cdn) {
+		setTimeout(function() { 
+			frm.trigger("set_table_indicators") 
+		}, 150)
 	}
 })
