@@ -33,6 +33,36 @@ class Dimension(Document):
 				)
 			)
 
+	def on_update(self):
+		material_list = frappe.get_list("Material de Impresion Items", {
+			"parent": self.name,
+			"parenttype": "Dimension",
+			"parentfield": "materials",
+		}, ["materials", "parent"])
+	
+		for material in material_list:
+
+			item_doc = frappe.new_doc("Item")
+			item_group = self.get_materials_item_group()
+
+			item_name = "{materials}, {parent}".format(**material)
+
+			if frappe.get_value("Item", item_name):
+				item_doc = frappe.get_doc("Item", item_name)
+
+			item_doc.update({
+				"item_code": item_name,
+				"item_name": item_name,
+				"item_group": item_group,
+				"is_sales_item": 0,
+				"is_purchase_item": 1,
+				"description": "{materials} en {parent}".format(**material)
+			})
+
+			item_doc.save()
+				
+		frappe.db.commit()
+
 	def calculate_area(self):
 		self.area = self.width * self.height
 
@@ -59,3 +89,31 @@ class Dimension(Document):
 		return "{height} {uom} x {width} {uom}".format(
 			** self.as_dict()
 		)
+
+	def get_materials_item_group(self):
+		item_group = frappe.new_doc("Item Group")
+
+		if frappe.get_value("Item Group", "Material de Impresion"):
+			item_group = frappe.get_doc("Item Group", "Material de Impresion")
+
+		item_group.update({
+			"parent_item_group": "Materiales",
+			"item_group_name": "Material de Impresion",
+			"route": "materiales/material-de-impresion"
+		})
+
+		item_group.save()
+
+		return item_group.get("name")
+
+	def on_trash(self):
+		material_list = frappe.get_list("Material de Impresion Items", {
+			"parent": self.name,
+			"parenttype": "Dimension",
+			"parentfield": "materials",
+		}, ["materials", "parent"])
+	
+		for material in material_list:
+			item_name = "{materials}, {parent}".format(**material)
+
+			frappe.delete_doc_if_exists("Item", item_name)

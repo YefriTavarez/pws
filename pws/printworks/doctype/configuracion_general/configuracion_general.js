@@ -3,6 +3,28 @@
 
 frappe.ui.form.on('Configuracion General', {
 	refresh: function(frm) {
+		var events = ["set_queries"]
 
+		$.map(events, function(event) {
+			frm.trigger(event)
+		})
+	},
+	set_queries: function(frm) {
+		var queries = ["set_item_group_query"]
+
+		$.map(queries, function(query) {
+			frm.trigger(query)
+		})
+	},
+	set_item_group_query: function(frm) {
+		var filters = {
+			"is_group": "1"
+		}
+
+		frm.set_query("item_group", function() {
+			return {
+				"filters": filters
+			}
+		})
 	}
-});
+})

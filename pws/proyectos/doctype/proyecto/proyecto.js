@@ -16,7 +16,7 @@ frappe.ui.form.on('Proyecto', {
 		})
 	},
 	refresh: function(frm) {
-		var events = ["add_custom_buttons", 
+		var events = ["add_custom_buttons", "set_queries",
 			"set_read_only_table", "set_table_indicators"]
 
 		$.map(events, function(event) {
@@ -37,6 +37,13 @@ frappe.ui.form.on('Proyecto', {
 		} else if (frm.is_new()) {
 			frm.trigger("set_todays_date_as_start_date")
 		}
+	},
+	set_queries: function(frm) {
+		var events = ["set_item_query"]
+
+		$.map(events, function(event) {
+			frm.trigger(event)
+		})
 	},
 	expected_start_date: function(frm) {
 		var next_month = frappe.datetime.add_months(frm.doc.expected_start_date, 1)
@@ -114,6 +121,15 @@ frappe.ui.form.on('Proyecto', {
 						[colors[status], status]))
 				}
 			})
+	},
+	set_item_query: function(frm) {
+		var query = "pws.queries.item_manufactured_query"
+
+		frm.set_query("item", function() {
+			return {
+				"query": query
+			}
+		})
 	},
 	set_read_only_table: function(frm) {
 		var has_permission = frappe.user.has_role("Supervisor de Proyectos")

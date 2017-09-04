@@ -85,3 +85,20 @@ def ens_dimension_query(doctype, txt, searchfield, start, page_len, filters):
 	}, ["parent"], order_by="parent")
 	
 	return [[row.parent] for row in dimension_list]
+
+def item_manufactured_query(doctype, txt, searchfield, start, page_len, filters):
+	default_item_group = frappe.db.get_single_value("Configuracion General", "item_group")
+
+	item_group_list = frappe.get_list("Item Group", {
+		"parent_item_group": default_item_group
+	}, ["name"])
+
+
+	item_list = []
+
+	for item_group in item_group_list:
+		item_list += frappe.get_list("Item", {
+			"item_group": item_group.get("name")
+		}, ["name", "description"], as_list=True)
+
+	return item_list

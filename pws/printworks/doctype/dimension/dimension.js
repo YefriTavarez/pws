@@ -4,8 +4,14 @@
 frappe.ui.form.on('Dimension', {
 	refresh: function(frm) {
 		frm.page.show_menu()
+		var events = [
+			"set_queries",
+			"show_corresponding_table"
+		]
 
-		frm.trigger("set_queries")
+		$.map(events, function(event){
+			frm.trigger(event)
+		})
 	},
 	after_save: function(frm) {
 		var method = "pws.rename_doc"
@@ -24,6 +30,16 @@ frappe.ui.form.on('Dimension', {
 		}
 
 		frappe.call({"method": method, "args": args, "callback" : callback })
+	},
+	width: function(frm) {
+		frm.trigger("calculate_area")
+	},
+	height: function(frm) {
+		frm.trigger("calculate_area")
+	},
+	calculate_area: function(frm) {
+		var area = flt(frm.doc.width) * flt(frm.doc.height)
+		frm.set_value("area", area)
 	},
 	set_queries: function(frm) {
 		var triggers = [
@@ -56,14 +72,4 @@ frappe.ui.form.on('Dimension', {
 			return { "filters": filters }
 		})
 	},
-	width: function(frm) {
-		frm.trigger("calculate_area")
-	},
-	height: function(frm) {
-		frm.trigger("calculate_area")
-	},
-	calculate_area: function(frm) {
-		var area = flt(frm.doc.width) * flt(frm.doc.height)
-		frm.set_value("area", area)
-	}
 })

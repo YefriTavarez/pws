@@ -64,7 +64,7 @@ $.extend(pws.utils, {
 	"show_assembler_details": function(body) {
 		var _body = body["name"]? "<h1><a href='/desk#Form/Ensamblador de Productos/%(name)s'>%(name)s</a></h1>": ""
 
-		_body += body["perfilador_de_productos"]? "<b>Perfilador:</b> %(perfilador_de_productos)s<br>": ""
+		_body += body["perfilador_de_productos"]? "<b>Producto:</b> %(perfilador_de_productos)s<br>": ""
 		_body += body["dimension"]? "<b>Dimension:</b> %(dimension)s<br>": ""
 		_body += body["material_nombre"]? "<b>Material:</b> %(material_nombre)s<br>": ""
 		_body += body["material_calibre"]? "<b>Calibre:</b> %(material_calibre)s<br>": ""
