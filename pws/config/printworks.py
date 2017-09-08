@@ -17,6 +17,7 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Proyecto",
+					"label": "Proyectos"
 				},
 			]
 		},
@@ -43,10 +44,12 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Item",
+					"label": "Articulos",
 				},
 				{
 					"type": "doctype",
 					"name": "Item Group",
+					"label": "Categoria de Articulos"
 				},
 			]
 		},
@@ -93,7 +96,8 @@ def get_data():
 				},
 				{
 					"type": "doctype",
-					"name": "Plantilla de Proyecto"
+					"name": "Plantilla de Proyecto",
+					"label": "Plantilla de Proyectos",
 				},
 			]
 		},

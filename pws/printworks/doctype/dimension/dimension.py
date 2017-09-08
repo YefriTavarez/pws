@@ -5,6 +5,7 @@
 from __future__ import unicode_literals
 
 import frappe
+import pws.api
 import pws.utils
 
 from frappe.model.document import Document
@@ -34,6 +35,8 @@ class Dimension(Document):
 			)
 
 	def on_update(self):
+		from pws.api import s_strip
+
 		material_list = frappe.get_list("Material de Impresion Items", {
 			"parent": self.name,
 			"parenttype": "Dimension",
@@ -41,22 +44,22 @@ class Dimension(Document):
 		}, ["materials", "parent"])
 	
 		for material in material_list:
+			material_doc = frappe.get_doc("Material de Impresion", material.materials)
+			item_code = "{0}{1}".format(material.materials, s_strip(self.name))
 
 			item_doc = frappe.new_doc("Item")
-			item_group = self.get_materials_item_group()
+			item_group = pws.api.get_materials_item_group()
 
-			item_name = "{materials}, {parent}".format(**material)
-
-			if frappe.get_value("Item", item_name):
-				item_doc = frappe.get_doc("Item", item_name)
+			if frappe.get_value("Item", item_code):
+				item_doc = frappe.get_doc("Item", item_code)
 
 			item_doc.update({
-				"item_code": item_name,
-				"item_name": item_name,
+				"item_code": item_code,
+				"item_name": material_doc.full_name,
 				"item_group": item_group,
 				"is_sales_item": 0,
 				"is_purchase_item": 1,
-				"description": "{materials} en {parent}".format(**material)
+				"description": "{0} en {1}".format(material_doc.full_name, self.name)
 			})
 
 			item_doc.save()
@@ -89,22 +92,6 @@ class Dimension(Document):
 		return "{height} {uom} x {width} {uom}".format(
 			** self.as_dict()
 		)
-
-	def get_materials_item_group(self):
-		item_group = frappe.new_doc("Item Group")
-
-		if frappe.get_value("Item Group", "Material de Impresion"):
-			item_group = frappe.get_doc("Item Group", "Material de Impresion")
-
-		item_group.update({
-			"parent_item_group": "Materiales",
-			"item_group_name": "Material de Impresion",
-			"route": "materiales/material-de-impresion"
-		})
-
-		item_group.save()
-
-		return item_group.get("name")
 
 	def on_trash(self):
 		material_list = frappe.get_list("Material de Impresion Items", {

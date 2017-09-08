@@ -11,6 +11,9 @@ frappe.ui.form.on('Ensamblador de Productos', {
 	onload_post_render: function(frm) {
 		frm.trigger("perfilador_de_productos")
 	},
+	validate: function(frm) {
+		frm.trigger("validate_duplicates")
+	},
 	set_queries: function(frm) {
 		var events = [
 			"set_material_query",
@@ -113,7 +116,7 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		})
 	},
 	set_utilidad_query: function(frm) {
-		frm.set_query("opciones_de_utilidad", function() {
+		frm.set_query("opciones_de_utilidad", "opciones_de_utilidad", function() {
 			var query = "pws.queries.ens_utilidad_query"
 			var filters = {
 				"perfilador": frm.doc.perfilador_de_productos
@@ -139,6 +142,16 @@ frappe.ui.form.on('Ensamblador de Productos', {
 	},
 	view_item: function(frm) {
 		frappe.set_route(["Form", "Item", frm.docname])
+	},
+	validate_duplicates: function(frm) {
+		var tables = [
+			"opciones_de_utilidad",
+			"opciones_de_textura"
+		]
+
+		$.each(tables, function(idx, tablename) {
+			pws.utils.validate_table(frm, tablename)
+		})
 	},
 	hide_empty_fields: function(frm) {
 		if (pws.profiler) {
@@ -190,4 +203,36 @@ frappe.ui.form.on('Ensamblador de Productos', {
 
 		frappe.call({ "method": method, "args": args, "callback": callback })
 	}
+})
+
+$.extend(pws.utils, {
+	"has": function(key, array) {
+		var found = false
+
+		$.each(array, function(idx, value) {
+			if (key == value) {
+				found = true
+			}
+		})
+
+		return found
+	}, 
+	validate_table: function(frm, tablename) {
+		var me = this
+
+		var found_list = new Array()
+
+		$.each(frm.doc[tablename], function(idx, row) {
+			if (me.has(row[tablename], found_list)) {
+				
+				frappe.msgprint(__("{0}: El elemento {1} esta duplicado en la fila {2}", 
+					[frm.fields_dict[tablename].df.label, row[tablename], row.idx]))
+
+				validated = false
+			} else {
+
+				found_list.push(row[tablename])
+			}
+		})
+	},
 })

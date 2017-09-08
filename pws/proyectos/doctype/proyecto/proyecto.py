@@ -10,13 +10,32 @@ from pws.api import s_sanitize, gut
 from frappe.model.document import Document
 from frappe.utils.file_manager import save_file
 
+from frappe.desk.form.assign_to import add as assign_to
 from frappe.model.mapper import get_mapped_doc as map_doc
 from frappe.model.naming import make_autoname as autoname
 
 class Proyecto(Document):
-	def __setup__(self):
-		pass
-		# self.make_difference()
+	def onload(self):
+		# self.tasks = []
+
+		task_list = frappe.get_all("Tarea", {
+			"proyecto": self.name,
+			"status": ["!=", "Cancelled"]
+		}, "*", order_by="creation")
+
+		for task in self.tasks:
+			doc = frappe.get_doc("Tarea", task.task_id)
+
+			task.update({
+				"title": doc.subject,
+				"status": doc.status,
+				"start_date": doc.exp_start_date,
+				"end_date": doc.exp_end_date,
+				"description": doc.description,
+				"task_weight": doc.task_weight,
+				"user": doc.user,
+				"task_id": doc.name
+			})
 
 	def autoname(self):
 
@@ -27,6 +46,15 @@ class Proyecto(Document):
 		naming_serie = "{0}-.#####".format(*first_two)
 
 		self.name = autoname(naming_serie)
+
+	def after_insert(self):
+		assign_to({
+			"doctype": self.doctype,
+			"name": self.name,
+			"assign_to": self.project_manager,
+			"description": "El proyecto {0} ({1}) ha sido encargado a usted"
+				.format(self.name, self.project_name)
+			})
 	
 	def on_update(self):
 		self.sync_tasks()
@@ -40,6 +68,7 @@ class Proyecto(Document):
 		if not pending_task:
 			self.status = "Completed"
 
+		# self.tasks = []
 		self.db_update()
 
 	def validate(self):
@@ -48,6 +77,11 @@ class Proyecto(Document):
 		name_sanitized = s_sanitize(dirty_name)
 
 		self.title = name_sanitized.title()
+
+		closed_tasks = len([task for task in self.tasks if task.status == "Closed"])
+		not_closed_tasks = len([task for task in self.tasks if task.status != "Cancelled"])
+
+		self.percent_complete = closed_tasks / (not_closed_tasks or 1.000) * 100.000
 
 	def collect_names(self):
 		fields = ["project_type", "customer", "item_name", 
@@ -58,11 +92,12 @@ class Proyecto(Document):
 
 	def create_project(self):
 		self.set("tasks", [])
+		
 		return map_doc("Plantilla de Proyecto", self.plantilla_de_proyecto, {
 			"Plantilla de Proyecto": {
 				"doctype": "Proyecto",
 				"field_map": {
-					"template_name": "project_name"
+					# to do
 				}
 			},
 			"Tarea de Plantilla": {
@@ -72,6 +107,8 @@ class Proyecto(Document):
 				}
 			}
 		}, self)
+
+		self.set("project_name", [])
 
 	def sync_tasks(self):
 		task_names = []
@@ -87,18 +124,6 @@ class Proyecto(Document):
 		# delete
 		for task in frappe.get_all("Tarea", ["name"], {"proyecto": self.name, "name": ("not in", task_names)}):
 			frappe.delete_doc("Tarea", task.name)
-
-	# def make_difference(self):
-	# 	task_names = []
-
-	# 	for task in frappe.get_all("Tarea", ["name"], { "proyecto": self.name }):
-	# 		task_names.append(task.name)
-
-	# 	for task in self.get_project_tasks():
-	# 		if not task.task_id in task_names:
-	# 			frappe.delete_doc("Tarea de Proyecto", task.name)
-
-	# 	frappe.db.commit() 
 
 	def get_project_tasks(self):
 		return frappe.get_all("Tarea de Proyecto", { 

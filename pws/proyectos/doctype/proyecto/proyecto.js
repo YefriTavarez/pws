@@ -1,7 +1,9 @@
 // Copyright (c) 2017, Yefri Tavarez and contributors
 // For license information, please see license.txt
 
+frappe.provide("pws.utils")
 frappe.provide("pws.prompt")
+
 frappe.ui.form.on('Proyecto', {
 	setup: function(frm) {
 
@@ -17,7 +19,7 @@ frappe.ui.form.on('Proyecto', {
 	},
 	refresh: function(frm) {
 		var events = ["add_custom_buttons", "set_queries",
-			"set_read_only_table", "set_table_indicators"]
+			"set_read_only_table", "set_table_indicators", "set_view_task"]
 
 		$.map(events, function(event) {
 			frm.trigger(event)
@@ -32,7 +34,10 @@ frappe.ui.form.on('Proyecto', {
 		frm.trigger("setup_prompt")
 	},
 	onload_post_render: function(frm) {
-		if ( !(frm.doc.tasks || []).length) {
+		var has_no_tasks = !! cur_frm.doc.tasks 
+			&& !!cur_frm.doc.tasks.length
+
+		if ( ! has_no_tasks) {
 			frm.trigger("show_prompt")
 		} else if (frm.is_new()) {
 			frm.trigger("set_todays_date_as_start_date")
@@ -43,6 +48,23 @@ frappe.ui.form.on('Proyecto', {
 
 		$.map(events, function(event) {
 			frm.trigger(event)
+		})
+	},
+	set_view_task: function(frm) {
+		frm.body.find("div[data-fieldname=tasks]").find(".grid-row").each(function() {
+			var $me = $(this)
+
+
+			$me.on("click", function() {
+				var docname = $me.attr("data-name")
+				if (docname) {
+					var task_id = frappe.model.get_value("Tarea de Proyecto", docname, "task_id")
+
+					setTimeout(function() {
+						frappe.set_route("Form", "Tarea", task_id)
+					}, 299)
+				}
+			})  
 		})
 	},
 	expected_start_date: function(frm) {
@@ -160,6 +182,12 @@ frappe.ui.form.on('Proyecto', {
 				frm.$wrapper.show()
 			}
 		})
+
+		pws.prompt.get_field("project_template").get_query = function() {
+			return {
+				"query": "pws.queries.project_template_query"
+			}
+		}
 	},
 	set_todays_date_as_start_date: function(frm) {
 		frm.set_value("expected_start_date", frappe.datetime.get_today())
@@ -260,6 +288,7 @@ frappe.ui.form.on("Tarea de Proyecto", {
 		}
 
 		frm.trigger("set_table_indicators")
+		frm.set_value("percent_complete", pws.utils.update_completed(frm))
 	},
 	edit_task: function(frm, cdt, cdn) {
 		var row = frappe.get_doc(cdt, cdn)
@@ -278,5 +307,22 @@ frappe.ui.form.on("Tarea de Proyecto", {
 		setTimeout(function() { 
 			frm.trigger("set_table_indicators") 
 		}, 150)
+	}
+})
+
+$.extend(pws.utils, {
+	update_completed: function(frm) {
+		var tasks = frm.doc.tasks.filter(function(row){
+			return row.status != "Cancelled";
+		})
+
+		var closed_tasks = frm.doc.tasks.filter(function(row){
+			return row.status == "Closed";
+		})
+		
+		tasks = tasks.length
+		closed_tasks = closed_tasks.length
+
+		return closed_tasks / tasks * 100
 	}
 })

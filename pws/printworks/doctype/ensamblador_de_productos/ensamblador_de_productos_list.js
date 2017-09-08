@@ -5,7 +5,6 @@ frappe.provide("pws.utils")
 
 frappe.listview_settings["Ensamblador de Productos"] = {
 	add_fields: [
-		"opciones_de_textura",
 		"cantidad_tiro_proceso",
 		"cantidad_proceso_retiro",
 		"cantidad_tiro_pantone",
@@ -20,33 +19,20 @@ frappe.listview_settings["Ensamblador de Productos"] = {
 	},
 	post_render_item: function(listview, html_row, value) {
 
-		frappe.call({
-			"method": "frappe.client.get_list",
-			"args": {
-				"doctype": "Opciones de Textura Items",
-				"fields": [
-					"idx",
-					"opciones_de_textura"
-				],
-				"filters": {
-					"parent": value.name
-				},
-				"limit_page_length": "0",
-				"order_by": "idx"
-			},
-			"callback": function(response) {
-				var textura_list = response.message
+		var callback = function(response, fieldname) {
+			var list = response.message
 
-				if (textura_list) {
-					$.each(textura_list, function(idx, row) {
-						value.opciones_de_textura += repl(
-							"<br><span style='margin-left: 10px;'>%(idx)s - %(opciones_de_textura)s</span>",
-							row
-						)
-					})
-				}
+			value[fieldname] = ""
+			
+			if (list) {
+				$.each(list, function(idx, row) {
+					value[fieldname] += repl("<br><span style='margin-left: 10px;'>%(idx)s - %(opts)s</span>", 
+						{ "opts": row[fieldname], "idx": row["idx"] })
+				})
 			}
-		})
+		}
+		pws.utils.get_table("Opciones de Textura Items", "opciones_de_textura", value, callback)
+		pws.utils.get_table("Opciones de Utilidad Items", "opciones_de_utilidad", value, callback)
 
 		html_row.find(".avatar.avatar-small").text("Ver")
 			.on("click", function(event) {
@@ -62,7 +48,8 @@ frappe.listview_settings["Ensamblador de Productos"] = {
 
 $.extend(pws.utils, {
 	"show_assembler_details": function(body) {
-		var _body = body["name"]? "<h1><a href='/desk#Form/Ensamblador de Productos/%(name)s'>%(name)s</a></h1>": ""
+		var _body = body["name"]? 
+			"<h1 style='margin-top: -5px;'><a href='/desk#Form/Ensamblador de Productos/%(name)s'>%(name)s</a></h1>": ""
 
 		_body += body["perfilador_de_productos"]? "<b>Producto:</b> %(perfilador_de_productos)s<br>": ""
 		_body += body["dimension"]? "<b>Dimension:</b> %(dimension)s<br>": ""
@@ -82,5 +69,24 @@ $.extend(pws.utils, {
 		_body += body["opciones_de_utilidad"]? "<b>Opciones de Utilidad:</b> %(opciones_de_utilidad)s<br>": ""
 
 		frappe.msgprint(repl(_body, body))
+	},
+	"get_table": function(doctype, fieldname, row, original_callback) {
+		var method = "frappe.client.get_list"
+
+		var args = {
+			"doctype": doctype,
+			"fields": ["idx", fieldname],
+			"filters": {
+				"parent": row["name"]
+			},
+			"limit_page_length": "0",
+			"order_by": "idx"
+		}
+
+		var callback = function(response) {
+			original_callback && original_callback(response, fieldname)
+		}
+
+		frappe.call({ "method": method, "args": args, "callback": callback })
 	}
 })

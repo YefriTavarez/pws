@@ -9,10 +9,12 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Proyecto",
+					"label": "Proyectos"
 				},
 				{
 					"type": "doctype",
 					"name": "Tarea",
+					"label": "Tareas"
 				},
 			]
 		},
@@ -22,14 +24,17 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Plantilla de Proyecto",
+					"label": "Plantilla de Proyectos"
 				},
 				{
 					"type": "doctype",
 					"name": "Tipo de Proyecto",
+					"label": "Tipo de Proyectos",
 				},
 				{
 					"type": "doctype",
 					"name": "Tipo de Adjunto",
+					"label": "Tipo de Adjuntos",
 				},
 
 			]
@@ -40,10 +45,12 @@ def get_data():
 				{
 					"type": "doctype",
 					"name": "Item",
+					"label": "Articulos",
 				},
 				{
 					"type": "doctype",
 					"name": "Item Group",
+					"label": "Categoria de Articulos"
 				},
 			]
 		},

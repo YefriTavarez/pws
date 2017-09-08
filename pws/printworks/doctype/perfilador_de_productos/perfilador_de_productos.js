@@ -79,7 +79,44 @@ frappe.ui.form.on('Perfilador de Productos', {
 	},
 	fill_tabla_materiales: function(frm) {
 
-		pws.utils.fill_table(frm, "Material de Impresion", "materials", "materials")
+		frm.doc["materials"] = new Array()
+
+		var method = "frappe.client.get_list"
+
+		var args = {
+			"doctype": "Material de Impresion",
+			"fields": ["name", "full_name"],
+			"filters": {
+				"enabled": "1"
+			},
+			"limit_page_length": 0
+		}
+
+		if (frm.doc.tiene_respaldo) {
+			$.extend(args, {
+				"filters": {
+					"enabled": "1",
+					"es_respaldo": "1"
+				}
+			})
+		}
+
+		var callback = function(response) {
+			var list = response.message
+
+			if (list) {
+				$.each(list, function(idx, value) {
+					child = frm.add_child("materials")
+
+					child["materials"] = value.name
+					child["material_name"] = value.full_name
+				})
+
+				frm.refresh_fields()
+			}
+		}
+
+		frappe.call({ "method": method, "args": args, "callback": callback })
 	},
 	fill_tabla_opciones_de_control: function(frm) {
 

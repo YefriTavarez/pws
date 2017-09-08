@@ -47,3 +47,19 @@ def gut(string, size=2):
 		for part in string.split("-") 
 		for word in part.split()
 	]
+
+def get_materials_item_group():
+	item_group = frappe.new_doc("Item Group")
+
+	if frappe.get_value("Item Group", "Material de Impresion"):
+		item_group = frappe.get_doc("Item Group", "Material de Impresion")
+
+	item_group.update({
+		"parent_item_group": "Materiales",
+		"item_group_name": "Material de Impresion",
+		"route": "materiales/material-de-impresion"
+	})
+
+	item_group.save()
+
+	return item_group.get("name")
