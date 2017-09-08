@@ -20,7 +20,7 @@ class MaterialdeImpresion(Document):
 		if flt(self.calibre):
 			full_name = "{} {}".format(full_name, self.calibre)
 
-		if flt(self.caras):
+		if flt(self.cara):
 			full_name = "{} {}C".format(full_name, self.caras)
 
 		self.full_name = full_name.title()
