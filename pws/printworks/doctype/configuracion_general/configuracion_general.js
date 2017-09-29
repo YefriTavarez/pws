@@ -10,7 +10,8 @@ frappe.ui.form.on('Configuracion General', {
 		})
 	},
 	set_queries: function(frm) {
-		var queries = ["set_item_group_query"]
+		var queries = ["set_item_group_query", 
+			"materials_item_group_query"]
 
 		$.map(queries, function(query) {
 			frm.trigger(query)
@@ -26,5 +27,16 @@ frappe.ui.form.on('Configuracion General', {
 				"filters": filters
 			}
 		})
+	},
+	materials_item_group_query: function(frm) {
+		var filters = {
+			"parent_item_group": "All Item Groups"
+		}
+
+		frm.set_query("materials_item_group", function() {
+			return {
+				"filters": filters
+			}
+		})	
 	}
 })

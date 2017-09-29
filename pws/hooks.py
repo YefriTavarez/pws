@@ -86,32 +86,37 @@ after_install = "pws.install.after_install.add_records"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"doctype": {
-# 		"after_insert": "pws.api.assign_to"
-# 	}
-# }
+doc_events = {
+	"Item": {
+		"autoname": "pws.api.item_autoname",
+		"validate": "pws.api.item_validate",
+		"on_trash": "pws.api.item_ontrash",
+	},
+	"Item Group": {
+		"after_insert": "pws.api.item_group_update"
+	}
+}
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"pws.tasks.all"
-# 	],
-# 	"daily": [
-# 		"pws.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"pws.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"pws.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"pws.tasks.monthly"
-# 	]
-# }
+scheduler_events = {
+	"all": [
+		"pws.tasks.all"
+	],
+	"daily": [
+		"pws.tasks.daily"
+	],
+	"hourly": [
+		"pws.tasks.hourly"
+	],
+	"weekly": [
+		"pws.tasks.weekly"
+	],
+	"monthly": [
+		"pws.tasks.monthly"
+	]
+}
 
 # Testing
 # -------
@@ -124,4 +129,6 @@ after_install = "pws.install.after_install.add_records"
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "pws.event.get_events"
 # }
+
+on_session_creation = ["pws.api.on_session_creation"]
 

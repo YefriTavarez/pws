@@ -17,7 +17,7 @@ class PlantilladeProyecto(Document):
 			self.doctype: {
 				"doctype": "Proyecto",
 				"field_map": {
-					"template_name": "project_name"
+					# to do
 				}
 			},
 			"Tarea de Plantilla": {

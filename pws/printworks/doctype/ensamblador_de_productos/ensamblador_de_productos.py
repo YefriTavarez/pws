@@ -7,21 +7,41 @@ import frappe
 import pws.api
 
 from frappe.model.document import Document
-from frappe.model.naming import make_autoname as autoname
+## from frappe.model.naming import make_autoname as autoname
 from frappe.utils import flt
 
 class EnsambladordeProductos(Document):
 	def autoname(self):
-		array = pws.api.gut(
-			pws.api.s_sanitize(
-				self.perfilador_de_productos
-			)
-		)
+		from pws.api import get_parent_code
 
-		naming_serie = "{0}-.####".format(
-			"".join(array))
+		# from the bottom to the top choose the first one with value
+		item_group = self.item_group_4 or self.item_group_3 or self.item_group_2 or self.item_group_1
 
-		self.name = autoname(naming_serie)
+		parent_codes = get_parent_code(item_group, [])
+
+		parents_code = "".join(parent_codes)
+
+		array = [c for c in parents_code]
+
+		length = len(frappe.get_list("Ensamblador de Productos", { 
+			"perfilador_de_productos": item_group 
+		}, ["name"]))
+
+		code = int(length) # convert it to int
+
+		item_group_code = "{0:04d}".format(code + 1)
+
+		missing_length = 8 - len(array)
+
+		for e in range(missing_length):
+			array.append("0")
+
+		array += item_group_code
+
+		new_name = "".join(array)
+		print("new_name {}".format(new_name))
+
+		self.name = new_name
 
 	def validate(self):
 		new_hash = self.make_new_hash()
@@ -92,7 +112,7 @@ class EnsambladordeProductos(Document):
 	def get_fields(self):
 		return [
 			"perfilador_de_productos",
-			"materials",
+			"materials_title",
 			"cantidad_tiro_proceso",
 			"cantidad_tiro_pantone",
 			"cantidad_proceso_retiro",
@@ -109,16 +129,13 @@ class EnsambladordeProductos(Document):
 		# new item allocated
 		item = frappe.new_doc("Item")
 
-		# alias
-		self.perfilador = self.perfilador_de_productos
+		
+		# from the bottom to the top choose the first one with value
+		item_group = self.item_group_4 or self.item_group_3 or self.item_group_2 or self.item_group_1
 
 		# load configuration from the control panel
 		products_are_stock_items = frappe.db.get_single_value("Configuracion General", 
 			"products_are_stock_items")
-
-		# item group for the profiler
-		item_group = frappe.get_value("Perfilador de Productos", 
-			self.perfilador, "item_group")
 
 		# if the item exists
 		if frappe.get_value("Item", self.name):
@@ -127,7 +144,11 @@ class EnsambladordeProductos(Document):
 
 		item.update({
 			"item_code": self.name,
-			"item_name": self.name,
+			"item_name": self.materials_title,
+			"item_group_1": self.item_group_1,
+			"item_group_2": self.item_group_2,
+			"item_group_3": self.item_group_3,
+			"item_group_4": self.item_group_4,
 			"item_group": item_group,
 			"description": self.get_self_description(),
 			"is_stock_item": products_are_stock_items,
@@ -138,17 +159,21 @@ class EnsambladordeProductos(Document):
 		item.save()
 
 	def get_self_description(self):
-		description = ""
-
-		for field in self.get_fields():
-			if self.get(field):
-				value = get_label(self.get(field))
-				
-				description += "{0}, ".format(value)
-
-		return description[:-2]
+		return ", ".join([self.get(field) 
+			for field in self.get_fields() 
+			if self.get(field)])
 
 	def on_trash(self):
+		length = len(frappe.get_list("Ensamblador de Productos", {
+			"perfilador_de_productos": self.perfilador_de_productos
+		}))
+
+		current_value = flt(self.name[-4:])
+
+		if current_value < length:
+			frappe.throw("""No puede eliminar este Producto porque no fue el 
+					ultimo creado para este Perfilador""")
+
 		frappe.delete_doc_if_exists("Item", self.name)
 
 

@@ -6,11 +6,10 @@ frappe.provide("pws.prompt")
 
 frappe.ui.form.on('Proyecto', {
 	setup: function(frm) {
-
 		var link_field = "item"
 		var fields_dict = {
 			"description": "notes",
-			 "item_group": "item_name"
+			"item_group": "item_name"
 		}
 
 		$.each(fields_dict, function(source_field, target_field) {
@@ -34,8 +33,8 @@ frappe.ui.form.on('Proyecto', {
 		frm.trigger("setup_prompt")
 	},
 	onload_post_render: function(frm) {
-		var has_no_tasks = !! cur_frm.doc.tasks 
-			&& !!cur_frm.doc.tasks.length
+		var has_no_tasks = !! frm.doc.tasks 
+			&& !! frm.doc.tasks.length
 
 		if ( ! has_no_tasks) {
 			frm.trigger("show_prompt")
@@ -51,33 +50,56 @@ frappe.ui.form.on('Proyecto', {
 		})
 	},
 	set_view_task: function(frm) {
-		frm.body.find("div[data-fieldname=tasks]").find(".grid-row").each(function() {
+		var row = frm.body.find("div[data-fieldname=tasks]")
+			.find(".grid-row")
+
+		row.each(function() {
 			var $me = $(this)
+			var docname = $me.attr("data-name")
+			var task_id = frappe.model.get_value("Tarea de Proyecto", docname, "task_id")
+				
+			if (task_id) {
+				$me.find("*").off()
 
+				$me.on("click", function() {
+					if (docname) {
 
-			$me.on("click", function() {
-				var docname = $me.attr("data-name")
-				if (docname) {
-					var task_id = frappe.model.get_value("Tarea de Proyecto", docname, "task_id")
-
-					setTimeout(function() {
-						frappe.set_route("Form", "Tarea", task_id)
-					}, 299)
-				}
-			})  
+						setTimeout(function() {
+							frappe.set_route(["Form", "Tarea", task_id])
+						}, 299)
+					}
+				})  
+			}
 		})
 	},
 	expected_start_date: function(frm) {
-		var next_month = frappe.datetime.add_months(frm.doc.expected_start_date, 1)
+		var fmt = "YYYY-MM-DD HH:mm:ss"
+		var m = moment(frm.doc.expected_start_date, fmt)
+		var next_month = m.add(1, "months")
+
 		var exp_start_date = frm.doc.expected_start_date
 
 		$.map(frm.doc.tasks, function(row) {
-			row.start_date = moment(exp_start_date + " 08:00:00", "YYYY-MM-DD hh:mm:ss")
-				.format("YYYY-MM-DD hh:mm:ss")
+			var m = {
+				format: function() {
+					return ""
+				}
+			}
 
-			row.end_date = moment(row.start_date, "YYYY-MM-DD hh:mm:ss")
-				.add(row.max_time, row.time_unit)
-				.format("YYYY-MM-DD hh:mm:ss")
+			if (frm.doc.dependant && pws.prev_closed_date) {
+				m = moment(frm.doc.closed_date, fmt)
+			} else {
+				m = moment(exp_start_date, fmt)
+			}
+			
+			row.start_date = m.format(fmt)
+
+			row.end_date = moment(row.start_date, fmt)
+				.add(row.max_time, row.time_unit).format(fmt)
+
+			exp_start_date = row.end_date
+			
+			pws.prev_closed_date = row.closed_date
 		})
 
 		frm.set_value("expected_end_date", next_month)
@@ -89,8 +111,6 @@ frappe.ui.form.on('Proyecto', {
 	add_custom_buttons: function(frm) {
 		if (frm.is_new()) {
 			frm.trigger("add_load_from_template_button")
-		} else {
-			// frm.trigger("add_new_attachments_button")
 		}
 	},
 	add_load_from_template_button: function(frm) {
@@ -98,51 +118,71 @@ frappe.ui.form.on('Proyecto', {
 			frm.trigger("load_from_template")
 		}, "Desde")
 	},
-	add_new_attachments_button: function(frm) {
-		frm.add_custom_button("Nuevo Adjunto", function() {
-			frm.trigger("new_attachment")
-		})
-	},
 	load_from_template: function(frm) {
 		frm.trigger("show_prompt")
 	},
 	set_table_indicators: function(frm) {
-		frm.page.body.find("[data-fieldname=tasks]")
-			
-			.find(".grid-body")
+		frm.page.body.find("[data-fieldname=tasks]").find(".grid-body")
+			.find(".grid-row").each(function(idx, html_row) {
 
-			.find(".grid-row")
-
-			.each(function(idx, html_row) {
 				var row = frappe.get_doc("Tarea de Proyecto", $(html_row).attr("data-name"))
+				var fmt = "YYYY-MM-DD HH:mm:ss"
 
 				if (row) {
+					var status = row.status
+
 					var colors = {
-						"Closed": "green",
-						"Open": "orange",
-						"Pending Review": "yellow",
+						"Open": "blue",
+						"Delayed": "red",
+						"Overdue": "red",
 						"Working": "blue",
+						"Closed": "green",
 						"Cancelled": "grey",
-						"Delayed": "red"
+						"Pending Review": "blue"
 					}
 
-					var status = row.status
 					if (status == "Open" || status == "Pending Review" || status == "Working") {
-						if (moment().format("YYYY-MM-DD hh:mm:ss") > row.end_date) {
-							status = "Delayed"
+
+						var any_pending = false
+						if (row.dependant) {
+							$(html_row).find(".octicon.octicon-triangle-down")
+								.removeClass()
+								.addClass("octicon octicon-mail-reply")
+
+							var dependant_list = (row.depends_on || "").split(", ")
+
+							$.map(dependant_list, function(subject) {
+								if ( ! subject) return 0.000
+
+								task = frappe.get_doc("Tarea de Proyecto", { "title": subject })
+
+								if (task.status != "Closed" || task.status != "Cancelled") {
+									any_pending = true
+								}
+							})
+
+							if (any_pending && moment().format(fmt) > row.start_date) {
+								status = "Delayed"
+							} else {
+								status = "Open"
+								colors["Open"] = "blue"
+							}
+						} else {
+							if (moment().format(fmt) > row.start_date) {
+								status = "Delayed"
+							}
 						}
 					}
 
-					$(this).find("[data-fieldname=title]")
-						.find(".static-area.ellipsis")
-					.find("span").remove()
+					$(this).find("[data-fieldname=title]").find(".static-area.ellipsis")
+						.find("span").remove()
 
-					$(this).find("[data-fieldname=title]")
-						.find(".static-area.ellipsis")
+					$(this).find("[data-fieldname=title]").find(".static-area.ellipsis")
 					.prepend(__("<span title=\"{1}\" class=\"indicator {0}\"></span>", 
 						[colors[status], status]))
 				}
 			})
+		frm.body.find(".octicon.octicon-triangle-down").hide()
 	},
 	set_item_query: function(frm) {
 		var query = "pws.queries.item_manufactured_query"
@@ -156,20 +196,19 @@ frappe.ui.form.on('Proyecto', {
 	set_read_only_table: function(frm) {
 		var has_permission = frappe.user.has_role("Supervisor de Proyectos")
 
-		if ( !has_permission) {
-			frm.set_df_property("tasks", "read_only", !has_permission)
+		if ( ! has_permission) {
+			// frm.set_df_property("tasks", "read_only", ! has_permission)
 
-			var fields = ["title", "user", "start_date", "end_date", "task_weight", "description"]
+			var fields = ["title", "user", "start_date", "end_date", "description"]
 
 			$.map(fields, function(field) {
-				frm.set_df_property(field, "read_only", !has_permission, frm.docname, "tasks")
-
+				// frm.set_df_property(field, "read_only", ! has_permission, frm.docname, "tasks")
 			})
 		}
 	},
 	setup_prompt: function(frm) {
 		var fields = {
-			"label":"Template", 
+			"label": "Template", 
 			"fieldname": "project_template", 
 			"fieldtype": "Link", 
 			"options": "Plantilla de Proyecto"
@@ -190,7 +229,27 @@ frappe.ui.form.on('Proyecto', {
 		}
 	},
 	set_todays_date_as_start_date: function(frm) {
-		frm.set_value("expected_start_date", frappe.datetime.get_today())
+		var fmt = "YYYY-MM-DD HH:mm:ss"
+		var now_datetime = frappe.datetime.now_datetime()
+		var m = moment(now_datetime, fmt)
+
+		if (frappe.datetime.now_time() < "08:00:00") {
+			// let's put it to the 8:00 o'clock
+			var today = frappe.datetime.now_date()
+
+			frm.set_value("expected_start_date", today + " 08:00:00")
+		} else if (frappe.datetime.now_time() < "17:00:00") {
+			// this is working hours then
+			var now_time = m.startOf("hour")
+			var an_hour_later = now_time.add(1, "hour")
+			
+			frm.set_value("expected_start_date", an_hour_later.format(fmt))
+		} else {
+			// this must be for tomorrow
+			var tomorrow = m.add(1, "days").format("YYYY-MM-DD")
+
+			frm.set_value("expected_start_date", tomorrow + " 08:00:00")
+		}
 	},
 	show_prompt: function(frm) {
 
@@ -252,7 +311,7 @@ frappe.ui.form.on('Proyecto', {
 			}
 
 			var callback = function(response) {
-				frappe.show_progress("Subiendo archivo", 2, 2)
+				frappe.show_progress("Subiendo archivo", 2.000, 2.000)
 
 				setTimeout(function() {
 					if (response.exec) {
@@ -265,7 +324,7 @@ frappe.ui.form.on('Proyecto', {
 				}, 999)
 			}
 
-			frappe.show_progress("Subiendo archivo", 1.5, 2)
+			frappe.show_progress("Subiendo archivo", 1.5, 2.000)
 			frappe.call({ "method": method, "args": args, "callback": callback })
 			
 			dialog.hide()
@@ -323,6 +382,6 @@ $.extend(pws.utils, {
 		tasks = tasks.length
 		closed_tasks = closed_tasks.length
 
-		return closed_tasks / tasks * 100
+		return closed_tasks / tasks * 100.000
 	}
 })

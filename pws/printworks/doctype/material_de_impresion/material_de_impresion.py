@@ -36,9 +36,10 @@ class MaterialdeImpresion(Document):
 	
 		for dimension in dimension_list:
 			item_code = "{0}{1}".format(self.name, s_strip(dimension.parent))
+			item_group = self.item_group_4 or self.item_group_3 or self.item_group_2 or self.item_group_1
 
 			item_doc = frappe.new_doc("Item")
-			item_group = pws.api.get_materials_item_group()
+			# item_group = pws.api.get_materials_item_group()
 
 			if frappe.get_value("Item", item_code):
 				item_doc = frappe.get_doc("Item", item_code)
@@ -46,6 +47,10 @@ class MaterialdeImpresion(Document):
 			item_doc.update({
 				"item_code": item_code,
 				"item_name": self.full_name,
+				"item_group_1": self.item_group_1,
+				"item_group_2": self.item_group_2,
+				"item_group_3": self.item_group_3,
+				"item_group_4": self.item_group_4,
 				"item_group": item_group,
 				"is_sales_item": 0,
 				"is_purchase_item": 1,

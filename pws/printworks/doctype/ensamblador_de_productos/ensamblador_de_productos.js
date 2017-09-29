@@ -1,18 +1,54 @@
 // Copyright (c) 2017, Yefri Tavarez and contributors
 // For license information, please see license.txt
 
-frappe.provide("pws")
+frappe.provide("pws.flags")
 
 frappe.ui.form.on('Ensamblador de Productos', {
 	refresh: function(frm) {
-		frm.trigger("set_queries")
-		frm.trigger("add_custom_buttons")
+		var events = [
+			"toggle_enable_item_group",
+			"add_custom_buttons",
+			"set_flags_for_item_groups",
+			"set_queries", "item_group_1", 
+			"item_group_2", "item_group_3"]
+
+		$.map(events, function(event) {
+			frm.trigger(event)
+		})
 	},
 	onload_post_render: function(frm) {
-		frm.trigger("perfilador_de_productos")
+		frappe.provide(__("pws.{0}", [frm.doctype]))
+
+		var events = [ "perfilador_de_productos" ]
+		
+		if (frm.is_new()) {
+			events.push("default_product_item_group")
+		} 
+
+		$.map(events, function(event) {
+			frm.trigger(event)
+		})
 	},
 	validate: function(frm) {
 		frm.trigger("validate_duplicates")
+	},
+	toggle_enable_item_group: function(frm) {
+		$.map(["item_group_1", "item_group_2", "item_group_3", "item_group_4"], function(field) {
+			frm.toggle_display(field, !! frm.doc.perfilador_de_productos)
+		})
+
+		frm.toggle_enable("item_group_1", ! frm.doc.item_group_1)
+	},
+	set_flags_for_item_groups: function(frm) {
+		var flags = [
+			"dont_clear_item_group_2",
+			"dont_clear_item_group_3",
+			"dont_clear_item_group_4",
+		]
+
+		$.map(flags, function(flag) {
+			pws.flags[flag] = ! frm.is_new()
+		})
 	},
 	set_queries: function(frm) {
 		var events = [
@@ -24,7 +60,11 @@ frappe.ui.form.on('Ensamblador de Productos', {
 			"set_proteccion_query",
 			"set_utilidad_query",
 			"set_textura_query",
-			"set_dimension_query"
+			"set_dimension_query",
+			"set_category_1_query", 
+			"set_category_2_query",
+			"set_category_3_query",
+			"set_category_4_query",
 		]
 
 		$.each(events, function(idx, event) {
@@ -35,6 +75,62 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		if (frm.doc.perfilador_de_productos) {
 			frm.trigger("fetch_the_profile_maker")
 		}
+
+		frm.trigger("toggle_enable_item_group")
+	},
+	item_group_1: function(frm) {
+		if ( ! pws.flags.dont_clear_item_group_2) {
+			frm.set_value("item_group_2", "")
+		}
+
+		frappe.db.get_value("Item Group", frm.doc.item_group_1, "is_group", function(data) {
+			var will_display = false
+
+			if (data) {
+				will_display = ! frm.is_new() && data.is_group
+			}
+
+			frm.toggle_display("item_group_2", will_display)
+		})
+
+		pws.flags.dont_clear_item_group_2 = undefined
+	},
+	item_group_2: function(frm) {
+		if ( ! pws.flags.dont_clear_item_group_3) {
+			frm.set_value("item_group_3", "")
+		}
+
+		frappe.db.get_value("Item Group", frm.doc.item_group_2, "is_group", function(data) {
+			var will_display = false
+
+			if (data) {
+				will_display = ! frm.is_new() && data.is_group
+			}
+				
+			frm.toggle_display("item_group_3", will_display)
+		})
+		
+		pws.flags.dont_clear_item_group_3 = undefined
+	},
+	item_group_3: function(frm) {
+		if ( ! pws.flags.dont_clear_item_group_4) {
+			frm.set_value("item_group_4", "")
+		}
+
+		frappe.db.get_value("Item Group", frm.doc.item_group_3, "is_group", function(data) {
+			var will_display = false
+
+			if (data) {
+				will_display = ! frm.is_new() && data.is_group
+			}
+				
+			frm.toggle_display("item_group_4", will_display)
+		})
+
+		pws.flags.dont_clear_item_group_4 = undefined
+	},
+	item_group_4: function(frm) {
+		// to do
 	},
 	add_custom_buttons: function(frm) {
 		var events = [
@@ -202,7 +298,71 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		}
 
 		frappe.call({ "method": method, "args": args, "callback": callback })
-	}
+	},
+	set_category_1_query: function(frm) {
+		frm.set_query("item_group_1", function() {
+			var filters = {
+				"parent_item_group": "All Item Groups"
+			}
+
+			return { "filters": filters }
+		})
+	},
+	set_category_2_query: function(frm) {
+		frm.set_query("item_group_2", function() {
+			var filters = {
+				"parent_item_group": frm.doc.item_group_1
+			}
+			
+			return { "filters": filters }
+		})
+	},
+	set_category_3_query: function(frm) {
+		frm.set_query("item_group_3", function() {
+			var filters = {
+				"parent_item_group": frm.doc.item_group_2
+			}
+			
+			return { "filters": filters }
+		})
+	},
+	set_category_4_query: function(frm) {
+		frm.set_query("item_group_4", function() {
+			var filters = {
+				"parent_item_group": frm.doc.item_group_3
+			}
+			
+			return { "filters": filters }
+		})
+	},
+	default_product_item_group: function(frm) {
+		var doctype = "Configuracion General"
+
+		var callback = function(data) {
+			if (data) {
+				pws[frm.doctype].default_product_group = data.item_group
+				frm.set_value("item_group_1", pws[frm.doctype].default_product_group)
+			}
+		}
+
+		if ( ! pws[frm.doctype].default_product_group) {
+			frappe.db.get_value(doctype, {
+				"name": doctype 
+			}, "item_group", callback)
+		} else {
+			setTimeout(function() {
+				frm.set_value("item_group_1", pws[frm.doctype].default_product_group)
+			}, 999)
+		}
+		
+		setTimeout(function() {
+			var fields = ["item_group_2", "item_group_3", "item_group_4"]
+
+			$.map(fields, function(field) {
+				frm.set_value(field, undefined)
+			})
+		}, 1500)
+	},
 })
 
 $.extend(pws.utils, {

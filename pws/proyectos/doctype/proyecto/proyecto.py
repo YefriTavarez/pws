@@ -16,13 +16,6 @@ from frappe.model.naming import make_autoname as autoname
 
 class Proyecto(Document):
 	def onload(self):
-		# self.tasks = []
-
-		task_list = frappe.get_all("Tarea", {
-			"proyecto": self.name,
-			"status": ["!=", "Cancelled"]
-		}, "*", order_by="creation")
-
 		for task in self.tasks:
 			doc = frappe.get_doc("Tarea", task.task_id)
 
@@ -32,13 +25,13 @@ class Proyecto(Document):
 				"start_date": doc.exp_start_date,
 				"end_date": doc.exp_end_date,
 				"description": doc.description,
-				"task_weight": doc.task_weight,
 				"user": doc.user,
-				"task_id": doc.name
+				"task_id": doc.name,
+				"dependant": doc.dependant,
+				"close_date": doc.close_date,
 			})
 
 	def autoname(self):
-
 		name_sanitized = s_sanitize(self.project_type)
 
 		first_two = gut(name_sanitized, size=3)
@@ -68,7 +61,6 @@ class Proyecto(Document):
 		if not pending_task:
 			self.status = "Completed"
 
-		# self.tasks = []
 		self.db_update()
 
 	def validate(self):
@@ -79,7 +71,7 @@ class Proyecto(Document):
 		self.title = name_sanitized.title()
 
 		closed_tasks = len([task for task in self.tasks if task.status == "Closed"])
-		not_closed_tasks = len([task for task in self.tasks if task.status != "Cancelled"])
+		not_closed_tasks = len([task for task in self.tasks if task.status != "Cancelled" and task.status != "Closed"])
 
 		self.percent_complete = closed_tasks / (not_closed_tasks or 1.000) * 100.000
 
@@ -121,6 +113,28 @@ class Proyecto(Document):
 
 			task.db_update()
 
+		for task in self.tasks:
+			doc = frappe.get_doc("Tarea", task.task_id)
+			if doc.dependant:
+
+				doc.set("depends_on", [])
+				
+				for title in (task.depends_on or "").split(", "):
+					if not title: break
+					
+					d = frappe.get_doc("Tarea", {
+						"subject": title,
+						"proyecto": self.name
+					})
+
+					doc.append("depends_on", {
+						"task": d.name,
+						"subject": d.subject,
+						"project": d.project
+					})
+				doc.save()
+
+
 		# delete
 		for task in frappe.get_all("Tarea", ["name"], {"proyecto": self.name, "name": ("not in", task_names)}):
 			frappe.delete_doc("Tarea", task.name)
@@ -147,6 +161,11 @@ def attach_file(doctype, docname, filedata):
 	fd_list = list(fd_json["files_data"])
 
 	for fd in fd_list:
+		file_list = frappe.get_list("File", { "file_name": ["like", "{}%".format(fd["filename"])]})
+
+		if file_list:
+			fd["filename"] = fd["filename"].replace(".pdf", "-{}.pdf".format(len(file_list) +1))
+
 		filedoc = save_file(fd["filename"], fd["dataurl"], 
 			doctype, docname, decode=True, is_private=True)
 
@@ -163,8 +182,8 @@ def sync_task(task, project_name):
 		"exp_start_date": task.start_date,
 		"exp_end_date": task.end_date,
 		"description": task.description,
-		"task_weight": task.task_weight,
-		"user": task.user
+		"user": task.user,
+		"dependant": task.dependant
 	})
 
 	doc.save(ignore_permissions=True)
