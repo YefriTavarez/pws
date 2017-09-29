@@ -62,7 +62,7 @@ app_include_js = "/assets/pws/js/pws.js"
 # ------------
 
 # before_install = "pws.install.before_install"
-after_install = "pws.install.after_install.add_records"
+after_install = "pws.install.add_records"
 
 # Desk Notifications
 # ------------------
