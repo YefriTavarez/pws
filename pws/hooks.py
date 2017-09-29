@@ -14,8 +14,7 @@ app_license = "General Public License, v3"
 # fixtures
 fixtures = [
 	"Custom Script", 
-	"Custom Field", 
-	"Item Group", 
+	"Custom Field"
 ]
 
 # Includes in <head>
@@ -132,3 +131,7 @@ scheduler_events = {
 
 on_session_creation = ["pws.api.on_session_creation"]
 
+website_context = {
+	"logo": "/assets/pws/images/favicon.png",
+	"splash_image": "/assets/pws/images/erp-icon.svg"
+}

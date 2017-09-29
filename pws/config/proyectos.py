@@ -16,16 +16,16 @@ def get_data():
 					"name": "Tarea",
 					"label": "Tareas"
 				},
-			]
-		},
-		{
-			"label": _("Otros"),
-			"items": [
 				{
 					"type": "doctype",
 					"name": "Plantilla de Proyecto",
 					"label": "Plantilla de Proyectos"
 				},
+			]
+		},
+		{
+			"label": _("Otros"),
+			"items": [
 				{
 					"type": "doctype",
 					"name": "Tipo de Proyecto",
@@ -37,21 +37,6 @@ def get_data():
 					"label": "Tipo de Adjuntos",
 				},
 
-			]
-		},
-		{
-			"label": _("Integraciones"),
-			"items": [
-				{
-					"type": "doctype",
-					"name": "Item",
-					"label": "Articulos",
-				},
-				{
-					"type": "doctype",
-					"name": "Item Group",
-					"label": "Categoria de Articulos"
-				},
 			]
 		},
 	]
