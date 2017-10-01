@@ -99,57 +99,36 @@ def add_to_date(date, years=0, months=0, days=0, hours=0, minutes=0, as_string=F
 		return date
 
 def item_autoname(doc, event):
+	from frappe.model.naming import make_autoname
+
 	item_validate(doc, event)
 
 	if doc.item_group == "All Item Groups":
-		name = "00000000"
-
-		length = len(frappe.get_list("Item", { "item_group": doc.item_group }))
-		code = int(length) # convert it to int
-
-		item_group_code = "{0:04d}".format(code + 1)
-
-		doc.name = "{0}{1}".format(name, item_group_code)
+		doc.name = make_autoname("00000000.####")
 
 		return False
 
 	parent_codes = get_parent_code(doc.item_group, [])
-
 	parents_code = "".join(parent_codes)
 
 	array = [c for c in parents_code]
-
-	length = len(frappe.get_list("Item", { "item_group": doc.item_group }))
-	code = int(length) # convert it to int
-
-	item_group_code = "{0:04d}".format(code + 1)
 
 	missing_length = 8 - len(array)
 
 	for e in range(missing_length):
 		array.append("0")
 
-	array += item_group_code
+	array += ".####"
+	serie = "".join(array)
 
-	doc.name = "".join(array)
+	doc.name = make_autoname(serie)
 
 def item_validate(doc, event):
 	doc.item_group = doc.item_group_4 or doc.item_group_3\
 		or doc.item_group_2 or doc.item_group_1
 
 def item_ontrash(doc, event):
-
-	id = doc.name
-
-	length = len(frappe.get_list("Item", {
-		"item_group": doc.item_group
-	}))
-
-	current_value = flt(id[-4:])
-
-	if current_value < length:
-		frappe.throw("""No puede eliminar este articulo porque no fue el 
-				ultimo creado debajo de esta categoria""")
+	pass
 
 def item_group_update(doc, event):
 	if not doc.item_group_name == "All Item Groups":
