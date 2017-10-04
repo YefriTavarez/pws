@@ -51,23 +51,7 @@ def gut(string, size=2):
 	]
 
 def get_materials_item_group():
-	material_item_group = frappe.get_value("Item Group", {
-		"name": "Material de Impresion"
-	}, ["name"])
-
-	if material_item_group:
-		return material_item_group
-
-	item_group = frappe.new_doc("Item Group")
-	item_group.update({
-		"parent_item_group": "All Item Groups",
-		"item_group_name": "Material de Impresion",
-		"route": "materiales/material-de-impresion"
-	})
-
-	item_group.save()
-
-	return item_group.get("name")
+	return frappe.db.get_single_value("Configuracion General", "materials_item_group")
 
 def add_to_date(date, years=0, months=0, days=0, hours=0, minutes=0, as_string=False, as_datetime=False):
 	"""Adds `days` to the given date"""
@@ -130,7 +114,8 @@ def item_validate(doc, event):
 def item_ontrash(doc, event):
 	pass
 
-def item_group_update(doc, event):
+def item_group_autoname(doc, event):
+
 	if not doc.item_group_name == "All Item Groups":
 		latest = get_lastest_code(doc.parent_item_group)
 
@@ -138,7 +123,8 @@ def item_group_update(doc, event):
 
 		doc.item_group_code = "{0:02d}".format(code + 1)
 
-	doc.db_update()
+	doc.name = "{0} - {1}".format(doc.item_group_code, 
+		doc.item_group_name.encode("utf-8").strip())
 
 def get_lastest_code(parent):
 	r = frappe.db.sql("""SELECT IFNULL(MAX(item_group_code), 0)
@@ -161,7 +147,5 @@ def get_parent_code(item_group, array=[]):
     return get_parent_code(doc.parent_item_group, array)
 
 def on_session_creation():
-	# frappe.msgprint("Bienvenido {}".format(frappe.session.user))
-
-	msg = "User {} has been logged in!".format(frappe.session.user)
+	msg = "User {0} has been logged in at {1}!".format(frappe.session.user, frappe.utils.now_datetime())
 	frappe.publish_realtime(event='msgprint', message=msg, user='yefritavarez@gmail.com') 
