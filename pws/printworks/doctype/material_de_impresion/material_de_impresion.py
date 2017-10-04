@@ -41,8 +41,8 @@ class MaterialdeImpresion(Document):
 			item_doc = frappe.new_doc("Item")
 			# item_group = pws.api.get_materials_item_group()
 
-			if frappe.get_value("Item", item_code):
-				item_doc = frappe.get_doc("Item", item_code)
+			if frappe.get_value("Item", { "item_code": item_code }):
+				item_doc = frappe.get_doc("Item", {"item_code": item_code })
 
 			item_doc.update({
 				"item_code": item_code,
@@ -51,7 +51,7 @@ class MaterialdeImpresion(Document):
 				"item_group_2": self.item_group_2,
 				"item_group_3": self.item_group_3,
 				"item_group_4": self.item_group_4,
-				"item_group": item_group,
+				# "item_group": item_group,
 				"is_sales_item": 0,
 				"is_purchase_item": 1,
 				"description": "{0} en {1}".format(self.full_name, dimension.parent)
@@ -71,8 +71,9 @@ def get_new_name(material_doc):
 	
 	new_name = "{0}".format("".join(gutted))
 
-	if material_doc.get("calibre"):
-		new_name = "{0}{1}".format(new_name, material_doc.get("calibre"))
+	select = material_doc.calibreopeso.lower()
+	if material_doc.get(select):
+		new_name = "{0}{1}".format(new_name, material_doc.get(select))
 
 	if material_doc.get("cara"):
 		new_name = "{0}{1}c".format(new_name, material_doc.get("caras"))

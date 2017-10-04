@@ -92,7 +92,7 @@ doc_events = {
 		"on_trash": "pws.api.item_ontrash",
 	},
 	"Item Group": {
-		"after_insert": "pws.api.item_group_update"
+		"autoname": "pws.api.item_group_autoname",
 	}
 }
 

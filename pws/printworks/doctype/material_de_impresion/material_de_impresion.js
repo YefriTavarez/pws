@@ -1,7 +1,7 @@
 // Copyright (c) 2017, Yefri Tavarez and contributors
 // For license information, please see license.txt
 
-
+frappe.provide("pws.flags")
 frappe.ui.form.on('Material de Impresion', {
 	refresh: function(frm) {
 		var events = ["set_queries", 
@@ -15,8 +15,13 @@ frappe.ui.form.on('Material de Impresion', {
 		frappe.provide(__("pws.{0}", [frm.doctype]))
 
 		var events = [
-			frm.is_new() ? "default_material_item_group": ""
+			"set_flags_for_item_groups",
+			"trigger_item_groups",
 		]
+		
+		if (frm.is_new()) {
+			events.push("default_material_item_group")
+		} 
 
 		$.map(events, function(event) {
 			frm.trigger(event)
@@ -24,7 +29,7 @@ frappe.ui.form.on('Material de Impresion', {
 	},
 	validate: function(frm) {
 		var request = {
-		    "method":  __("{0}.{1}", [
+			"method":  __("{0}.{1}", [
 				frappe.model.get_server_module_name(frm.doctype),
 				"rename_doc"
 			])
@@ -85,6 +90,17 @@ frappe.ui.form.on('Material de Impresion', {
 	toggle_enable_item_group: function(frm) {
 		frm.toggle_enable("item_group_1", ! frm.doc.item_group_1)
 	},
+	set_flags_for_item_groups: function(frm) {
+		var flags = [
+			"dont_clear_item_group_2",
+			"dont_clear_item_group_3",
+			"dont_clear_item_group_4",
+		]
+
+		$.map(flags, function(flag) {
+			pws.flags[flag] = ! frm.is_new()
+		})
+	},
 	set_queries: function(frm) {
 		var events = [
 			"set_category_1_query", 
@@ -133,16 +149,81 @@ frappe.ui.form.on('Material de Impresion', {
 			return { "filters": filters }
 		})
 	},
+	trigger_item_groups: function(frm) {
+		var events = [
+			"item_group_1",
+			"item_group_2",
+			"item_group_3",
+			"item_group_4",
+		]
+
+		$.map(events, function(event) {
+			frm.trigger(event)
+		})
+	},
 	item_group_1: function(frm) {
-		frm.set_value("item_group_2", "")
+		if ( ! pws.flags.dont_clear_item_group_2) {
+			frm.set_value("item_group_2", "")
+		}
+
+		frappe.db.get_value("Item Group", frm.doc.item_group_1, "is_group", function(data) {
+			var will_display = false
+
+			if (data) {
+				will_display = data.is_group
+			}
+			
+			frm.toggle_display("item_group_2", will_display)
+		})
+
+		pws.flags.dont_clear_item_group_2 = undefined
 	},
 	item_group_2: function(frm) {
-		frm.set_value("item_group_3", "")
+		if ( ! pws.flags.dont_clear_item_group_3) {
+			frm.set_value("item_group_3", "")
+		}
+
+		frappe.db.get_value("Item Group", frm.doc.item_group_2, "is_group", function(data) {
+			var will_display = false
+
+			if (data) {
+				will_display = data.is_group
+			}
+
+			frm.toggle_display("item_group_3", will_display)
+		})
+
+		pws.flags.dont_clear_item_group_3 = undefined
 	},
 	item_group_3: function(frm) {
-		frm.set_value("item_group_4", "")
+		if ( ! pws.flags.dont_clear_item_group_4) {
+			frm.set_value("item_group_4", "")
+		}
+
+		frappe.db.get_value("Item Group", frm.doc.item_group_3, "is_group", function(data) {
+			var will_display = false
+
+			if (data) {
+				will_display =  data.is_group
+			}
+
+			frm.toggle_display("item_group_4", will_display)
+		})
+
+		pws.flags.dont_clear_item_group_4 = undefined
 	},
 	item_group_4: function(frm) {
 		// to do
 	},
+	calibreopeso: function(frm) {
+		var fields = [
+			"calibre",
+			"peso",
+			"uom"
+		]
+
+		$.map(fields, function(field) {
+			frm.set_value(field, "")
+		})
+	}
 })

@@ -50,13 +50,17 @@ class Dimension(Document):
 			item_doc = frappe.new_doc("Item")
 			item_group = pws.api.get_materials_item_group()
 
-			if frappe.get_value("Item", item_code):
-				item_doc = frappe.get_doc("Item", item_code)
+			if frappe.get_value("Item", { "item_code": item_code }):
+				item_doc = frappe.get_doc("Item", { "item_code": item_code })
 
 			item_doc.update({
 				"item_code": item_code,
 				"item_name": material_doc.full_name,
-				"item_group": item_group,
+				"item_group_1": material_doc.item_group_1,
+				"item_group_2": material_doc.item_group_2,
+				"item_group_3": material_doc.item_group_3,
+				"item_group_4": material_doc.item_group_4,
+				# "item_group": item_group,
 				"is_sales_item": 0,
 				"is_purchase_item": 1,
 				"description": "{0} en {1}".format(material_doc.full_name, self.name)

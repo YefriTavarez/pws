@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 
 frappe.listview_settings["Dimension"] = {
-	add_fields: ["product_type"],
+	// add_fields: ["product_type"],
 	post_render_item: function(listview, html_row, value) {
 		// var new_name = value.
 		// if (value.show_name) {
