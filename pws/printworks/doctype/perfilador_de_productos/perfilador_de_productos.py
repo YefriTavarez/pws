@@ -9,7 +9,7 @@ import pws.api
 
 from frappe.model.document import Document
 
-_item_group = frappe.db.get_single_value("Stock Settings", "item_group")
+_item_group = frappe.db.get_single_value("Configuracion General", "item_group")
 
 class PerfiladordeProductos(Document):
 	def validate(self):
@@ -32,7 +32,7 @@ class PerfiladordeProductos(Document):
 		doc = frappe.new_doc("Item Group")
 
 		item_group = frappe.get_value("Item Group", {
-			"item_group_name": "{0}".format(self.name)
+			"item_group_name": self.name
 		}, ["name"])
 
 		if item_group:
@@ -40,22 +40,22 @@ class PerfiladordeProductos(Document):
 
 		doc.update({
 			"parent_item_group" : _item_group,
-			"item_group_name" : "{0}".format(self.name),
+			"item_group_name" : self.name,
 			"route": self.get_route(),
 			"is_group": False
 		})
 
 		doc.save()
 
-		# update this object too
-		self.item_group = doc.item_group_name
-		self.parent_item_group = doc.parent_item_group
+		# # update this object too
+		# self.item_group = doc.item_group_name
+		# self.parent_item_group = doc.parent_item_group
 
 	def get_route(self):
 		parent_route = ''
 
 		parent_route = frappe.get_value("Item Group", 
-			self.parent_item_group, "route")
+			_item_group, "route")
 
 		item_group_route = pws.api.s_strip("{0}".format(self.name))
 
