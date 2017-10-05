@@ -10,7 +10,8 @@ frappe.ui.form.on('Ensamblador de Productos', {
 			"add_custom_buttons",
 			"set_flags_for_item_groups",
 			"set_queries", "item_group_1", 
-			"item_group_2", "item_group_3"]
+			"item_group_2", "item_group_3",
+			"show_hide_calibre_o_peso"]
 
 		$.map(events, function(event) {
 			frm.trigger(event)
@@ -31,6 +32,20 @@ frappe.ui.form.on('Ensamblador de Productos', {
 	},
 	validate: function(frm) {
 		frm.trigger("validate_duplicates")
+	},
+	materials: function(frm) {
+		frm.trigger("show_hide_calibre_o_peso")
+	},
+	show_hide_calibre_o_peso: function(frm) {
+		if (flt(frm.doc.material_calibre)) {
+			frm.fields_dict.material_calibre.$wrapper.show()
+			frm.fields_dict.material_peso.$wrapper.hide()
+		}
+
+		if (flt(frm.doc.material_peso)) {
+			frm.fields_dict.material_calibre.$wrapper.hide()
+			frm.fields_dict.material_peso.$wrapper.show()
+		}
 	},
 	toggle_enable_item_group: function(frm) {
 		$.map(["item_group_1", "item_group_2", "item_group_3", "item_group_4"], function(field) {

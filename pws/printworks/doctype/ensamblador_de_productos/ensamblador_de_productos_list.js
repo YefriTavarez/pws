@@ -9,6 +9,7 @@ frappe.listview_settings["Ensamblador de Productos"] = {
 		"cantidad_proceso_retiro",
 		"cantidad_tiro_pantone",
 		"cantidad_pantone_retiro",
+		"materials_title",
 	],
 	onload: function(listview) {
 		listview.add_button("Ver Detalle", function() {
@@ -53,9 +54,7 @@ $.extend(pws.utils, {
 
 		_body += body["perfilador_de_productos"]? "<b>Producto:</b> %(perfilador_de_productos)s<br>": ""
 		_body += body["dimension"]? "<b>Dimension:</b> %(dimension)s<br>": ""
-		_body += body["material_nombre"]? "<b>Material:</b> %(material_nombre)s<br>": ""
-		_body += body["material_calibre"]? "<b>Calibre:</b> %(material_calibre)s<br>": ""
-		_body += body["material_caras"]? "<b>Material Caras:</b> %(material_caras)s<br>": ""
+		_body += body["materials_title"]? "<b>Material:</b> %(materials_title)s<br>": ""
 		_body += flt(body["cantidad_tiro_proceso"])? "<b>Colores Proceso Tiro:</b> %(cantidad_tiro_proceso)s<br>": ""
 		_body += flt(body["cantidad_tiro_pantone"])? "<b>Colores Pantone Re-tiro:</b> %(cantidad_tiro_pantone)s<br>": ""
 		_body += flt(body["cantidad_proceso_retiro"])? "<b>Colores Proceso Re-tiro:</b> %(cantidad_proceso_retiro)s<br>": ""

@@ -67,10 +67,10 @@ class EnsambladordeProductos(Document):
 		array = ["".join(
 			gut(self.get(key)))
 			for key in self.get_fields() 
-		if self.get(key)] 
-
+		if self.get(str(key))] 
 
 		pre_hash = "".join(array).upper()
+		frappe.errprint("pre_hash {}".format(pre_hash))
 
 		pre_hash_with_textures = "{0}{1}".format(pre_hash,
 			self.get_textura_names())
@@ -85,9 +85,9 @@ class EnsambladordeProductos(Document):
 			"hash": new_hash.upper()
 		}, ["name"])
 
-		if exists and not new_hash.upper() == self.hash:
-			frappe.throw("""Ensamblador <a href='/desk#Form/Ensamblador de Productos/{0}'>{0}</a> ya existe."""
-				.format(exists))
+		#if exists and not exists == self.name and not new_hash.upper() == self.hash:
+		#	frappe.throw("""Ensamblador <a href='/desk#Form/Ensamblador de Productos/{0}'>{0}</a> ya existe."""
+		#		.format(exists))
 
 		return new_hash
 
@@ -142,40 +142,73 @@ class EnsambladordeProductos(Document):
 			# let's load it and use it
 			item = frappe.get_doc("Item", self.name)
 
+		item_name = "{0} {1} {2}".format(self.perfilador_de_productos, self.materials_title, self.dimension)
+		description = self.get_self_description()
+
+		for utilidad in self.opciones_de_utilidad:
+			description ="{0}, {1}".format(description, " ".join(
+				gut(utilidad.opciones_de_utilidad)))
+
 		item.update({
 			"item_code": self.name,
-			"item_name": self.materials_title,
+			"item_name": item_name,
 			"item_group_1": self.item_group_1,
 			"item_group_2": self.item_group_2,
 			"item_group_3": self.item_group_3,
 			"item_group_4": self.item_group_4,
 			"item_group": item_group,
-			"description": self.get_self_description(),
+			"description": "{}.".format(description),
 			"is_stock_item": products_are_stock_items,
-			"is_purchase_item": 0,
-			"is_sales_item": 1
+			"is_purchase_item": "0",
+			"is_sales_item": "1"
 		})
 
 		item.save()
 
 	def get_self_description(self):
-		return ", ".join([self.get(field) 
+		description = ", ".join([self.get_label(field)
 			for field in self.get_fields() 
 			if self.get(field)])
 
+		new_desc =  description.replace("Tiro,   +", "+")\
+			.replace("Retiro,   +", "+")
+			
+		# frappe.errprint("new_desc {}".format(new_desc))
+		return new_desc
+
 	def on_trash(self):
-		length = len(frappe.get_list("Ensamblador de Productos", {
-			"perfilador_de_productos": self.perfilador_de_productos
-		}))
+		# length = len(frappe.get_list("Ensamblador de Productos", {
+		# 	"perfilador_de_productos": self.perfilador_de_productos
+		# }))
 
-		current_value = flt(self.name[-4:])
+		# current_value = flt(self.name[-4:])
 
-		if current_value < length:
-			frappe.throw("""No puede eliminar este Producto porque no fue el 
-					ultimo creado para este Perfilador""")
+		# if current_value < length:
+		# 	frappe.throw("""No puede eliminar este Producto porque no fue el 
+		# 			ultimo creado para este Perfilador""")
 
 		frappe.delete_doc_if_exists("Item", self.name)
 
+	def get_label(self, field):
+		if not field in ["cantidad_tiro_proceso", "cantidad_tiro_pantone",
+			"cantidad_proceso_retiro", "cantidad_pantone_retiro"]:
+			return self.get(field)
+
+		plural = flt(self.get(field)) > 1.000
+
+		color_o_colores = "Colores" if plural else "Color"
+
+		d = {
+			"cantidad_tiro_proceso": "{0} {1} Proceso Tiro".format(self.get(field), color_o_colores) if not self.get(field) > 3.000 else "Full Color Tiro",
+			"cantidad_tiro_pantone": " + {0} {1}  Pantone Tiro".format(self.get(field), color_o_colores),
+			"cantidad_proceso_retiro": "{0} {1} Proceso Retiro".format(self.get(field), color_o_colores) if not self.get(field) > 3.000 else "Full Color Pantone Retiro",
+			"cantidad_pantone_retiro": " + {0} {1} Pantone Retiro".format(self.get(field), color_o_colores)
+		}
+
+		if d.get(field):
+			return " {}".format(d.get(field))
+
+		return field
 
 def gut(string):
 	return [ word
@@ -183,18 +216,6 @@ def gut(string):
 		for word in part.split()
 	]
 
-def get_label(field):
-	d = {
-		"cantidad_tiro_proceso": "Colres Tiro Proceso",
-		"cantidad_tiro_pantone": "Colres Tiro Pantone",
-		"cantidad_proceso_retiro": "Colres Retiro Proceso",
-		"cantidad_pantone_retiro": "Colres Retiro Pantone"
-	}
-
-	if d.get(field):
-		return "{0} {1}".format(field, d.get(field))
-
-	return field
 
 
 # 'cantidad_pantone_retiro',

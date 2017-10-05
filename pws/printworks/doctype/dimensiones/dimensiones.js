@@ -1,7 +1,7 @@
 // Copyright (c) 2017, Yefri Tavarez and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Dimension', {
+frappe.ui.form.on('Dimensiones', {
 	refresh: function(frm) {
 		frm.page.show_menu()
 		var events = [
@@ -73,3 +73,4 @@ frappe.ui.form.on('Dimension', {
 		})
 	},
 })
+

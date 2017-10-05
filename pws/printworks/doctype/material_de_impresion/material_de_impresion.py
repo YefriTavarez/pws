@@ -17,11 +17,23 @@ class MaterialdeImpresion(Document):
 		full_name = "{}".format(
 			self.nombre)
 
-		if flt(self.calibre):
-			full_name = "{} {}".format(full_name, self.calibre)
+		select = self.calibreopeso.lower()
+
+		if flt(self.get(select)):
+			full_name = "{} {}".format(full_name, self.get(select))
+
+		if self.consider_uom:
+			full_name = "{} {}".format(full_name, self.get("uom") or "")
+
+
+		if self.get("terminacion"):
+			full_name = "{} {}".format(full_name, self.get("terminacion"))
 
 		if flt(self.cara):
 			full_name = "{} {}C".format(full_name, self.caras)
+
+		if self.get("identificador"):
+			full_name = "{} ({})".format(full_name, self.get("identificador"))
 
 		self.full_name = full_name.title()
 
@@ -39,19 +51,17 @@ class MaterialdeImpresion(Document):
 			item_group = self.item_group_4 or self.item_group_3 or self.item_group_2 or self.item_group_1
 
 			item_doc = frappe.new_doc("Item")
-			# item_group = pws.api.get_materials_item_group()
 
 			if frappe.get_value("Item", { "item_code": item_code }):
 				item_doc = frappe.get_doc("Item", {"item_code": item_code })
 
 			item_doc.update({
 				"item_code": item_code,
-				"item_name": self.full_name,
+				"item_name": "{0} {1}".format(self.full_name, dimension.parent),
 				"item_group_1": self.item_group_1,
 				"item_group_2": self.item_group_2,
 				"item_group_3": self.item_group_3,
 				"item_group_4": self.item_group_4,
-				# "item_group": item_group,
 				"is_sales_item": 0,
 				"is_purchase_item": 1,
 				"description": "{0} en {1}".format(self.full_name, dimension.parent)
@@ -71,12 +81,20 @@ def get_new_name(material_doc):
 	
 	new_name = "{0}".format("".join(gutted))
 
-	select = material_doc.calibreopeso.lower()
+	select = material_doc.get("calibreopeso").lower()
 	if material_doc.get(select):
 		new_name = "{0}{1}".format(new_name, material_doc.get(select))
 
+	if material_doc.get("terminacion"):
+		new_name = "{}{}".format(new_name, material_doc.get("terminacion")[0])
+
 	if material_doc.get("cara"):
 		new_name = "{0}{1}c".format(new_name, material_doc.get("caras"))
+
+	if material_doc.get("identificador"):
+		new_name = "{}{}".format(new_name, material_doc.get("identificador")[0])
+
+
 
 	return new_name.upper()
 

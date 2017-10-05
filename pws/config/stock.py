@@ -58,7 +58,7 @@ def get_data():
 			"items": [
 				{
 					"type": "doctype",
-					"name": "Dimension",
+					"name": "Dimensiones",
 				},
 				{
 					"type": "doctype",

@@ -51,6 +51,8 @@ frappe.ui.form.on('Material de Impresion', {
 
 			frappe.call(request)
 		})
+
+		frm.trigger("validate_uom_is_set")
 	},
 	add_custom_buttons: function(frm) {
 		if ( ! frm.is_new()) {
@@ -89,6 +91,11 @@ frappe.ui.form.on('Material de Impresion', {
 	},
 	toggle_enable_item_group: function(frm) {
 		frm.toggle_enable("item_group_1", ! frm.doc.item_group_1)
+	},
+	validate_uom_is_set: function(frm) {
+		if (frm.doc.consider_uom && ! frm.doc.uom) {
+			frappe.throw("No se especifico una Unidad de Medida para este Material")
+		}
 	},
 	set_flags_for_item_groups: function(frm) {
 		var flags = [

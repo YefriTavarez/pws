@@ -62,4 +62,4 @@ class PerfiladordeProductos(Document):
 		return "{0}/{1}".format(parent_route, item_group_route.lower())
 
 	def on_trash(self):
-		frappe.delete_doc("Item Group", self.item_group, force=True)
+		frappe.delete_doc_if_exists("Item Group", self.name, force=True)

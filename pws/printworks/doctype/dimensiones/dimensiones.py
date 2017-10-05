@@ -10,7 +10,7 @@ import pws.utils
 
 from frappe.model.document import Document
 
-class Dimension(Document):
+class Dimensiones(Document):
 	def autoname(self):
 		new_name = self.make_new_name()
 
@@ -39,7 +39,7 @@ class Dimension(Document):
 
 		material_list = frappe.get_list("Material de Impresion Items", {
 			"parent": self.name,
-			"parenttype": "Dimension",
+			"parenttype": "Dimensiones",
 			"parentfield": "materials",
 		}, ["materials", "parent"])
 	
@@ -55,12 +55,11 @@ class Dimension(Document):
 
 			item_doc.update({
 				"item_code": item_code,
-				"item_name": material_doc.full_name,
+				"item_name": "{0} {1}".format(material_doc.full_name, self.name),
 				"item_group_1": material_doc.item_group_1,
 				"item_group_2": material_doc.item_group_2,
 				"item_group_3": material_doc.item_group_3,
 				"item_group_4": material_doc.item_group_4,
-				# "item_group": item_group,
 				"is_sales_item": 0,
 				"is_purchase_item": 1,
 				"description": "{0} en {1}".format(material_doc.full_name, self.name)
@@ -100,7 +99,7 @@ class Dimension(Document):
 	def on_trash(self):
 		material_list = frappe.get_list("Material de Impresion Items", {
 			"parent": self.name,
-			"parenttype": "Dimension",
+			"parenttype": "Dimensiones",
 			"parentfield": "materials",
 		}, ["materials", "parent"])
 	
