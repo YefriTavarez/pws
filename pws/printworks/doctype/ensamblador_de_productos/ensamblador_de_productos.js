@@ -8,9 +8,9 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		var events = [
 			"toggle_enable_item_group",
 			"add_custom_buttons",
+			"set_queries", 
 			"set_flags_for_item_groups",
-			"set_queries", "item_group_1", 
-			"item_group_2", "item_group_3",
+			"item_group_1", "item_group_2", "item_group_3",
 			"show_hide_calibre_o_peso"]
 
 		$.map(events, function(event) {
@@ -21,7 +21,7 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		frappe.provide(__("pws.{0}", [frm.doctype]))
 
 		var events = [ "perfilador_de_productos" ]
-		
+
 		if (frm.is_new()) {
 			events.push("default_product_item_group")
 		} 
@@ -92,17 +92,19 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		}
 
 		frm.trigger("toggle_enable_item_group")
+
+		frm.refresh()
 	},
 	item_group_1: function(frm) {
 		if ( ! pws.flags.dont_clear_item_group_2) {
-			frm.set_value("item_group_2", "")
+			// frm.set_value("item_group_2", "")
 		}
 
 		frappe.db.get_value("Item Group", frm.doc.item_group_1, "is_group", function(data) {
 			var will_display = false
 
 			if (data) {
-				will_display = ! frm.is_new() && data.is_group
+				will_display = data.is_group
 			}
 
 			frm.toggle_display("item_group_2", will_display)
@@ -112,14 +114,14 @@ frappe.ui.form.on('Ensamblador de Productos', {
 	},
 	item_group_2: function(frm) {
 		if ( ! pws.flags.dont_clear_item_group_3) {
-			frm.set_value("item_group_3", "")
+			// frm.set_value("item_group_3", "")
 		}
 
 		frappe.db.get_value("Item Group", frm.doc.item_group_2, "is_group", function(data) {
 			var will_display = false
 
 			if (data) {
-				will_display = ! frm.is_new() && data.is_group
+				will_display = data.is_group
 			}
 				
 			frm.toggle_display("item_group_3", will_display)
@@ -129,14 +131,14 @@ frappe.ui.form.on('Ensamblador de Productos', {
 	},
 	item_group_3: function(frm) {
 		if ( ! pws.flags.dont_clear_item_group_4) {
-			frm.set_value("item_group_4", "")
+			// frm.set_value("item_group_4", "")
 		}
 
 		frappe.db.get_value("Item Group", frm.doc.item_group_3, "is_group", function(data) {
 			var will_display = false
 
 			if (data) {
-				will_display = ! frm.is_new() && data.is_group
+				will_display = data.is_group
 			}
 				
 			frm.toggle_display("item_group_4", will_display)
@@ -148,8 +150,10 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		// to do
 	},
 	add_custom_buttons: function(frm) {
+		frm.clear_custom_buttons()
+
 		var events = [
-			!frm.is_new() && "add_view_item_button"
+			! frm.is_new() && "add_view_item_button"
 		]
 
 		$.each(events, function(idx, event) {

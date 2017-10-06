@@ -7,41 +7,13 @@ import frappe
 import pws.api
 
 from frappe.model.document import Document
-## from frappe.model.naming import make_autoname as autoname
+from frappe.model.naming import make_autoname
 from frappe.utils import flt
 
 class EnsambladordeProductos(Document):
 	def autoname(self):
-		from pws.api import get_parent_code
-
-		# from the bottom to the top choose the first one with value
-		item_group = self.item_group_4 or self.item_group_3 or self.item_group_2 or self.item_group_1
-
-		parent_codes = get_parent_code(item_group, [])
-
-		parents_code = "".join(parent_codes)
-
-		array = [c for c in parents_code]
-
-		length = len(frappe.get_list("Ensamblador de Productos", { 
-			"perfilador_de_productos": item_group 
-		}, ["name"]))
-
-		code = int(length) # convert it to int
-
-		item_group_code = "{0:04d}".format(code + 1)
-
-		missing_length = 8 - len(array)
-
-		for e in range(missing_length):
-			array.append("0")
-
-		array += item_group_code
-
-		new_name = "".join(array)
-		print("new_name {}".format(new_name))
-
-		self.name = new_name
+		self.validate()
+		self.name = self.new_name
 
 	def validate(self):
 		new_hash = self.make_new_hash()
@@ -67,7 +39,7 @@ class EnsambladordeProductos(Document):
 		array = ["".join(
 			gut(self.get(key)))
 			for key in self.get_fields() 
-		if self.get(str(key))] 
+		if str(self.get(str(key)))] 
 
 		pre_hash = "".join(array).upper()
 		frappe.errprint("pre_hash {}".format(pre_hash))
@@ -85,9 +57,9 @@ class EnsambladordeProductos(Document):
 			"hash": new_hash.upper()
 		}, ["name"])
 
-		#if exists and not exists == self.name and not new_hash.upper() == self.hash:
-		#	frappe.throw("""Ensamblador <a href='/desk#Form/Ensamblador de Productos/{0}'>{0}</a> ya existe."""
-		#		.format(exists))
+		if exists and not exists == self.name and not new_hash.upper() == self.hash:
+			frappe.throw("""Ensamblador <a href='/desk#Form/Ensamblador de Productos/{0}'>{0}</a> ya existe con las mismas
+				especificaciones.""".format(exists))
 
 		return new_hash
 
@@ -129,7 +101,6 @@ class EnsambladordeProductos(Document):
 		# new item allocated
 		item = frappe.new_doc("Item")
 
-		
 		# from the bottom to the top choose the first one with value
 		item_group = self.item_group_4 or self.item_group_3 or self.item_group_2 or self.item_group_1
 
@@ -137,12 +108,13 @@ class EnsambladordeProductos(Document):
 		products_are_stock_items = frappe.db.get_single_value("Configuracion General", 
 			"products_are_stock_items")
 
-		# if the item exists
-		if frappe.get_value("Item", self.name):
-			# let's load it and use it
-			item = frappe.get_doc("Item", self.name)
-
 		item_name = "{0} {1} {2}".format(self.perfilador_de_productos, self.materials_title, self.dimension)
+
+		# if the item exists
+		if frappe.get_value("Item", { "hash": self.hash }):
+			# let's load it and use it
+			item = frappe.get_doc("Item", { "hash": self.hash })
+
 		description = self.get_self_description()
 
 		for utilidad in self.opciones_de_utilidad:
@@ -150,7 +122,8 @@ class EnsambladordeProductos(Document):
 				gut(utilidad.opciones_de_utilidad)))
 
 		item.update({
-			"item_code": self.name,
+			"item_code": item_name,
+			"hash": self.hash,
 			"item_name": item_name,
 			"item_group_1": self.item_group_1,
 			"item_group_2": self.item_group_2,
@@ -164,6 +137,7 @@ class EnsambladordeProductos(Document):
 		})
 
 		item.save()
+		self.new_name = item.name
 
 	def get_self_description(self):
 		description = ", ".join([self.get_label(field)
@@ -173,20 +147,9 @@ class EnsambladordeProductos(Document):
 		new_desc =  description.replace("Tiro,   +", "+")\
 			.replace("Retiro,   +", "+")
 			
-		# frappe.errprint("new_desc {}".format(new_desc))
 		return new_desc
 
 	def on_trash(self):
-		# length = len(frappe.get_list("Ensamblador de Productos", {
-		# 	"perfilador_de_productos": self.perfilador_de_productos
-		# }))
-
-		# current_value = flt(self.name[-4:])
-
-		# if current_value < length:
-		# 	frappe.throw("""No puede eliminar este Producto porque no fue el 
-		# 			ultimo creado para este Perfilador""")
-
 		frappe.delete_doc_if_exists("Item", self.name)
 
 	def get_label(self, field):
@@ -199,10 +162,10 @@ class EnsambladordeProductos(Document):
 		color_o_colores = "Colores" if plural else "Color"
 
 		d = {
-			"cantidad_tiro_proceso": "{0} {1} Proceso Tiro".format(self.get(field), color_o_colores) if not self.get(field) > 3.000 else "Full Color Tiro",
-			"cantidad_tiro_pantone": " + {0} {1}  Pantone Tiro".format(self.get(field), color_o_colores),
-			"cantidad_proceso_retiro": "{0} {1} Proceso Retiro".format(self.get(field), color_o_colores) if not self.get(field) > 3.000 else "Full Color Pantone Retiro",
-			"cantidad_pantone_retiro": " + {0} {1} Pantone Retiro".format(self.get(field), color_o_colores)
+			"cantidad_tiro_proceso": "{0} {1} Proceso Tiro".format(self.get(field), color_o_colores) if not flt(self.get(field)) > 3.000 else "Full Color Tiro",
+			"cantidad_tiro_pantone": "+ {0} {1} Pantone Tiro".format(self.get(field), color_o_colores),
+			"cantidad_proceso_retiro": "{0} {1} Proceso Retiro".format(self.get(field), color_o_colores) if not flt(self.get(field)) > 3.000 else "Full Color Pantone Retiro",
+			"cantidad_pantone_retiro": "+ {0} {1} Pantone Retiro".format(self.get(field), color_o_colores)
 		}
 
 		if d.get(field):
@@ -211,27 +174,8 @@ class EnsambladordeProductos(Document):
 		return field
 
 def gut(string):
+	string = str(string)
 	return [ word
 		for part in string.split("-") 
 		for word in part.split()
 	]
-
-
-
-# 'cantidad_pantone_retiro',
-# 'cantidad_proceso_retiro',
-# 'cantidad_tiro_pantone',
-# 'cantidad_tiro_proceso',
-# 'dimension',
-# 'material_calibre',
-# 'material_caras',
-# 'material_nombre',
-# 'materials',
-# 'opciones_de_control',
-# 'opciones_de_corte',
-# 'opciones_de_empalme',
-# 'opciones_de_plegado',
-# 'opciones_de_proteccion',
-# 'opciones_de_textura',
-# 'opciones_de_utilidad',
-# 'perfilador_de_productos',

@@ -112,7 +112,18 @@ def item_validate(doc, event):
 		or doc.item_group_2 or doc.item_group_1
 
 def item_ontrash(doc, event):
-	pass
+	serie = doc.name[:8]
+	identifier = doc.name[-4:]
+
+	current = frappe.db.sql("""SELECT current 
+		FROM tabSeries 
+		WHERE name = '{}' """.format(serie), as_list=True)[0][0]
+
+	if flt(current) == flt(identifier):
+		frappe.db.sql("""UPDATE tabSeries 
+			SET current = {0}
+			WHERE name = '{1}' """.format(flt(identifier) -1 if flt(identifier) > 0 else 0, serie),
+		as_list=True)
 
 def item_group_autoname(doc, event):
 
