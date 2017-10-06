@@ -87,12 +87,12 @@ class Dimensiones(Document):
 		return self.get_new_name()
 
 	def get_new_name(self):
-		return "{width} {uom} x {height} {uom}".format(
+		return "{width} {uom_width} x {height} {uom_height}".format(
 			** self.as_dict()
 		)
 
 	def get_backward_name(self):
-		return "{height} {uom} x {width} {uom}".format(
+		return "{height} {uom_height} x {width} {uom_width}".format(
 			** self.as_dict()
 		)
 
