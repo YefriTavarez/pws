@@ -39,7 +39,7 @@ class EnsambladordeProductos(Document):
 		array = ["".join(
 			gut(self.get(key)))
 			for key in self.get_fields() 
-		if str(self.get(str(key)))] 
+		if (self.get(key) if isinstance(self.get(key), basestring) else str(self.get(key)))] 
 
 		pre_hash = "".join(array).upper()
 		frappe.errprint("pre_hash {}".format(pre_hash))
@@ -174,7 +174,7 @@ class EnsambladordeProductos(Document):
 		return field
 
 def gut(string):
-	string = str(string)
+	string = string if isinstance(string, basestring) else str(string)
 	return [ word
 		for part in string.split("-") 
 		for word in part.split()
