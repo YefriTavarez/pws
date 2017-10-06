@@ -17,8 +17,6 @@ class Dimensiones(Document):
 		self.name = new_name
 		
 	def validate(self):
-		self.calculate_area()
-
 		new_name = self.get_new_name()
 
 		backward = self.get_backward_name()
@@ -68,9 +66,6 @@ class Dimensiones(Document):
 			item_doc.save()
 				
 		frappe.db.commit()
-
-	def calculate_area(self):
-		self.area = self.width * self.height
 
 	def make_new_name(self):
 

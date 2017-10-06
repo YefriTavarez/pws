@@ -31,16 +31,6 @@ frappe.ui.form.on('Dimensiones', {
 
 		frappe.call({"method": method, "args": args, "callback" : callback })
 	},
-	width: function(frm) {
-		frm.trigger("calculate_area")
-	},
-	height: function(frm) {
-		frm.trigger("calculate_area")
-	},
-	calculate_area: function(frm) {
-		var area = flt(frm.doc.width) * flt(frm.doc.height)
-		frm.set_value("area", area)
-	},
 	set_queries: function(frm) {
 		var triggers = [
 			"set_category_query",
