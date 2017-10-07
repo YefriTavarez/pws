@@ -67,7 +67,7 @@ after_install = "pws.install.add_records"
 # ------------------
 # See frappe.core.notifications.get_notification_config
 
-# notification_config = "pws.notifications.get_notification_config"
+notification_config = "pws.notifications.get_notification_config"
 
 # Permissions
 # -----------

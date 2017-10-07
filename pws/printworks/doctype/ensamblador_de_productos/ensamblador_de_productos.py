@@ -108,7 +108,7 @@ class EnsambladordeProductos(Document):
 		products_are_stock_items = frappe.db.get_single_value("Configuracion General", 
 			"products_are_stock_items")
 
-		item_name = "{0} {1} {2}".format(self.perfilador_de_productos, self.materials_title, self.dimension)
+		item_name = "{0}, {1}, {2}".format(self.perfilador_de_productos, self.materials_title, self.dimension)
 
 		# if the item exists
 		if frappe.get_value("Item", { "hash": self.hash }):

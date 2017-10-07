@@ -9,7 +9,7 @@ frappe.ui.form.on('Proyecto', {
 		var link_field = "item"
 		var fields_dict = {
 			"description": "notes",
-			"item_group": "item_name"
+			"item_name": "item_name"
 		}
 
 		$.each(fields_dict, function(source_field, target_field) {
@@ -30,7 +30,11 @@ frappe.ui.form.on('Proyecto', {
 			})
 	},
 	onload: function(frm) {
-		frm.trigger("setup_prompt")
+		var events = ["set_read_only_form", "setup_prompt"]
+
+		$.map(events, function(event) {
+			frm.trigger(event)
+		})
 	},
 	onload_post_render: function(frm) {
 		var has_no_tasks = !! frm.doc.tasks 
@@ -41,6 +45,8 @@ frappe.ui.form.on('Proyecto', {
 		} else if (frm.is_new()) {
 			frm.trigger("set_todays_date_as_start_date")
 		}
+
+		$(".layout-main .form-column.col-sm-12 > form > .input-max-width").css("min-width", "100%")
 	},
 	set_queries: function(frm) {
 		var events = ["set_item_query"]
@@ -48,6 +54,34 @@ frappe.ui.form.on('Proyecto', {
 		$.map(events, function(event) {
 			frm.trigger(event)
 		})
+	},
+	set_read_only_form: function(frm) {
+		var is_same_user = (frappe.session.user == frm.doc.owner)
+		var is_manager = frappe.user.has_role("Supervisor de Proyectos")
+
+		var fields = [
+			"company", "customer",
+			"estimated_costing",
+			"expected_end_date", "expected_start_date",
+			"gross_margin", "is_active",
+			"item", "item_name", "notes",
+			"per_gross_margin",
+			"percent_complete_method",
+			"priority", "production_qty",
+			"project_manager", "project_name", 
+			"project_type", "status", "title",
+			"total_billing_amount", "total_costing_amount",
+			"total_expense_claim", "total_purchase_cost",
+			"total_sales_cost", "sales_order"
+		]
+
+		$.map(fields, function(key) {
+			frm.toggle_enable(key, is_same_user || is_manager || frm.is_new())
+		})
+
+		if (( ! frm.is_new() || ! is_same_user) && ! is_manager ) {
+			frm.disable_save()
+		}
 	},
 	set_view_task: function(frm) {
 		var row = frm.body.find("div[data-fieldname=tasks]")

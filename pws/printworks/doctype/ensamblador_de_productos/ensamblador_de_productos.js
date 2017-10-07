@@ -184,7 +184,8 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		frm.set_query("opciones_de_control", function() {
 			var query = "pws.queries.ens_control_query"
 			var filters = {
-				"perfilador": frm.doc.perfilador_de_productos
+				"perfilador": frm.doc.perfilador_de_productos,
+				"material": frm.doc.materials
 			}
 
 			return { "query": query, "filters": filters }
@@ -194,7 +195,8 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		frm.set_query("opciones_de_corte", function() {
 			var query = "pws.queries.ens_corte_query"
 			var filters = {
-				"perfilador": frm.doc.perfilador_de_productos
+				"perfilador": frm.doc.perfilador_de_productos,
+				"material": frm.doc.materials
 			}
 
 			return { "query": query, "filters": filters }
@@ -204,7 +206,8 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		frm.set_query("opciones_de_empalme", function() {
 			var query = "pws.queries.ens_empalme_query"
 			var filters = {
-				"perfilador": frm.doc.perfilador_de_productos
+				"perfilador": frm.doc.perfilador_de_productos,
+				"material": frm.doc.materials
 			}
 
 			return { "query": query, "filters": filters }
@@ -214,7 +217,8 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		frm.set_query("opciones_de_plegado", function() {
 			var query = "pws.queries.ens_plegado_query"
 			var filters = {
-				"perfilador": frm.doc.perfilador_de_productos
+				"perfilador": frm.doc.perfilador_de_productos,
+				"material": frm.doc.materials
 			}
 
 			return { "query": query, "filters": filters }
@@ -224,7 +228,8 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		frm.set_query("opciones_de_proteccion", function() {
 			var query = "pws.queries.ens_proteccion_query"
 			var filters = {
-				"perfilador": frm.doc.perfilador_de_productos
+				"perfilador": frm.doc.perfilador_de_productos,
+				"material": frm.doc.materials
 			}
 
 			return { "query": query, "filters": filters }
@@ -234,7 +239,8 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		frm.set_query("opciones_de_utilidad", "opciones_de_utilidad", function() {
 			var query = "pws.queries.ens_utilidad_query"
 			var filters = {
-				"perfilador": frm.doc.perfilador_de_productos
+				"perfilador": frm.doc.perfilador_de_productos,
+				"material": frm.doc.materials
 			}
 
 			return { "query": query, "filters": filters }
@@ -244,7 +250,8 @@ frappe.ui.form.on('Ensamblador de Productos', {
 		frm.set_query("opciones_de_textura", "opciones_de_textura", function() {
 			var query = "pws.queries.ens_textura_query"
 			var filters = {
-				"perfilador": frm.doc.perfilador_de_productos
+				"perfilador": frm.doc.perfilador_de_productos,
+				"material": frm.doc.materials
 			}
 
 			return { "query": query, "filters": filters }

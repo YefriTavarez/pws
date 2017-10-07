@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 
 import frappe, json
 
+from frappe.utils import flt
 from pws.api import s_sanitize, gut
 from frappe.model.document import Document
 from frappe.utils.file_manager import save_file
@@ -30,6 +31,8 @@ class Proyecto(Document):
 				"dependant": doc.dependant,
 				"close_date": doc.close_date,
 			})
+
+		self.update_percent_complete()
 
 	def autoname(self):
 		name_sanitized = s_sanitize(self.project_type)
@@ -70,16 +73,18 @@ class Proyecto(Document):
 
 		self.title = name_sanitized.title()
 
-		closed_tasks = len([task for task in self.tasks if task.status == "Closed"])
-		not_closed_tasks = len([task for task in self.tasks if task.status != "Cancelled" and task.status != "Closed"])
+	def update_percent_complete(self):
 
-		self.percent_complete = closed_tasks / (not_closed_tasks or 1.000) * 100.000
+		closed_tasks = len([task for task in self.tasks if task.status == "Closed"])
+		not_closed_tasks = len([task for task in self.tasks if task.status != "Cancelled"])
+
+		self.percent_complete = flt(closed_tasks) / (not_closed_tasks or 1.000) * 100.000
 
 	def collect_names(self):
 		fields = ["project_type", "customer", "item_name", 
 			"project_name", "production_qty"]
 
-		return "{0}: {1} {2} ({3}) Cant. {4}".format(*[
+		return "{0}: {1} - {2} ({3}), Cant. {4}".format(*[
 			self.get(field) for field in fields])
 
 	def create_project(self):
@@ -107,10 +112,12 @@ class Proyecto(Document):
 
 		for task in self.tasks:
 			doc = sync_task(task, self.name)
+			doc.project_name = self.title
 
 			task.task_id = doc.name
 			task_names.append(task.task_id)
 
+			doc.db_update()
 			task.db_update()
 
 		for task in self.tasks:
@@ -124,7 +131,7 @@ class Proyecto(Document):
 					
 					d = frappe.get_doc("Tarea", {
 						"subject": title,
-						"proyecto": self.name
+						"project": self.name
 					})
 
 					doc.append("depends_on", {
@@ -132,11 +139,11 @@ class Proyecto(Document):
 						"subject": d.subject,
 						"project": d.project
 					})
+
 				doc.save()
 
-
 		# delete
-		for task in frappe.get_all("Tarea", ["name"], {"proyecto": self.name, "name": ("not in", task_names)}):
+		for task in frappe.get_all("Tarea", ["name"], {"project": self.name, "name": ("not in", task_names)}):
 			frappe.delete_doc("Tarea", task.name)
 
 	def get_project_tasks(self):
@@ -147,7 +154,7 @@ class Proyecto(Document):
 
 	def on_trash(self):
 		tasks = frappe.get_all("Tarea", {
-			"proyecto": self.name 
+			"project": self.name 
 		}, ["name"])
 
 		for task in tasks:
@@ -176,14 +183,15 @@ def sync_task(task, project_name):
 		doc = frappe.get_doc("Tarea", task.task_id)
 
 	doc.update({
-		"proyecto": project_name,
+		"project": project_name,
 		"subject": task.title,
 		"status": task.status,
 		"exp_start_date": task.start_date,
 		"exp_end_date": task.end_date,
 		"description": task.description,
 		"user": task.user,
-		"dependant": task.dependant
+		"dependant": task.dependant,
+		"owner": task.user
 	})
 
 	doc.save(ignore_permissions=True)
