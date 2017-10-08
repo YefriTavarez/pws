@@ -61,8 +61,7 @@ frappe.ui.form.on('Tarea', {
 		}
 
 		if (frm.doc.status == "Closed" || frm.doc.status == "Cancelled") {
-			// ToDo: tell the server that this task was closed
-
+			frm.doc.was_closed = true
 			frm.doc.close_date = frappe.datetime.now_datetime()
 		}
 	}
