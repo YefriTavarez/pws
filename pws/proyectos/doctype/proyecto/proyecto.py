@@ -43,14 +43,14 @@ class Proyecto(Document):
 
 		self.name = autoname(naming_serie)
 
-	def after_insert(self):
-		assign_to({
-			"doctype": self.doctype,
-			"name": self.name,
-			"assign_to": self.project_manager,
-			"description": "El proyecto {0} ({1}) ha sido encargado a usted"
-				.format(self.name, self.project_name)
-			})
+	# def after_insert(self):
+	# 	assign_to({
+	# 		"doctype": self.doctype,
+	# 		"name": self.name,
+	# 		"assign_to": self.project_manager,
+	# 		"description": "El proyecto {0} ({1}) ha sido encargado a usted"
+	# 			.format(self.name, self.project_name)
+	# 		})
 	
 	def on_update(self):
 		self.sync_tasks()
