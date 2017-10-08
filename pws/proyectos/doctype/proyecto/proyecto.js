@@ -87,7 +87,7 @@ frappe.ui.form.on('Proyecto', {
 		var row = frm.body.find("div[data-fieldname=tasks]")
 			.find(".grid-row")
 
-		row.each(function() {
+		row.each(function(key, html) {
 			var $me = $(this)
 			var docname = $me.attr("data-name")
 			var task_id = frappe.model.get_value("Tarea de Proyecto", docname, "task_id")
@@ -95,13 +95,15 @@ frappe.ui.form.on('Proyecto', {
 			if (task_id) {
 				$me.find("*").off()
 
-				$me.on("click", function() {
+				$me.on("click", function(event) {
 					if (docname) {
 
 						setTimeout(function() {
 							frappe.set_route(["Form", "Tarea", task_id])
 						}, 299)
 					}
+
+					event.stopPropagation()
 				})  
 			}
 		})

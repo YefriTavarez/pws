@@ -32,11 +32,13 @@ def update_task_start_times():
 		prev_task = frappe._dict({})
 		project_doc = frappe.get_doc("Proyecto", project.name)
 
-		for task in project_doc.tasks:
+		task_list = [ t for t in project_doc.tasks if not t.status == 'Closed' and not status == 'Cancelled']
+
+		for task in task_list:
 			doc = frappe.get_doc("Tarea", task.task_id)
 			
 			if task.dependant:
-				if not prev_task.get("close_date"): return 0
+				if not prev_task.get("close_date"): break
 
 				opts = frappe._dict({
 					"as_datetime": True,
