@@ -60,7 +60,7 @@ frappe.ui.form.on('Tarea', {
 			frappe.throw("¡No puede cambiar el estado de la Tarea a Abierto porque ya esta Atrasada!")
 		}
 
-		if (frm.doc.status == "Closed" || frm.doc.status == "Cancelled") {
+		if (frm.doc.status == "Closed") {
 			frm.doc.was_closed = true
 			frm.doc.close_date = frappe.datetime.now_datetime()
 		}

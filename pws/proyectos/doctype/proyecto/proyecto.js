@@ -48,6 +48,11 @@ frappe.ui.form.on('Proyecto', {
 
 		$(".layout-main .form-column.col-sm-12 > form > .input-max-width").css("min-width", "100%")
 	},
+	validate: function(frm) {
+		if ( ! frm.doc.production_qty) {
+			frappe.throw("¡Cantidad a producir es invalida!")
+		}
+	},
 	set_queries: function(frm) {
 		var events = ["set_item_query"]
 

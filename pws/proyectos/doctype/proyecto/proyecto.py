@@ -52,7 +52,7 @@ class Proyecto(Document):
 	# 			.format(self.name, self.project_name)
 	# 		})
 	
-	def on_update(self):
+	def after_insert(self):
 		self.sync_tasks()
 
 		pending_task = False
@@ -142,9 +142,9 @@ class Proyecto(Document):
 
 				doc.save()
 
-		# delete
-		for task in frappe.get_all("Tarea", ["name"], {"project": self.name, "name": ("not in", task_names)}):
-			frappe.delete_doc("Tarea", task.name)
+		# # delete
+		# for task in frappe.get_all("Tarea", ["name"], {"project": self.name, "name": ("not in", task_names)}):
+		# 	frappe.delete_doc("Tarea", task.name)
 
 	def get_project_tasks(self):
 		return frappe.get_all("Tarea de Proyecto", { 
@@ -191,7 +191,9 @@ def sync_task(task, project_name):
 		"description": task.description,
 		"user": task.user,
 		"dependant": task.dependant,
-		"owner": task.user
+		"owner": task.user,
+		"time_unit": task.time_unit,
+		"max_time": task.max_time
 	})
 
 	doc.save(ignore_permissions=True)
