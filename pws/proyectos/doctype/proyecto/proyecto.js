@@ -53,6 +53,15 @@ frappe.ui.form.on('Proyecto', {
 			frappe.throw("¡Cantidad a producir es invalida!")
 		}
 	},
+	production_qty: function(frm) {
+		var formatted_qty = flt(frm.doc.production_qty)
+			.formatInteger()
+
+		setTimeout(function() {
+			frm.doc.production_qty = formatted_qty
+			refresh_field("production_qty")
+		}, 99)
+	},
 	set_queries: function(frm) {
 		var events = ["set_item_query"]
 
@@ -163,66 +172,69 @@ frappe.ui.form.on('Proyecto', {
 		frm.trigger("show_prompt")
 	},
 	set_table_indicators: function(frm) {
-		frm.page.body.find("[data-fieldname=tasks]").find(".grid-body")
-			.find(".grid-row").each(function(idx, html_row) {
+		var do_for_each = function(idx, html_row) {
+			
+			var row = frappe.get_doc("Tarea de Proyecto", $(html_row).attr("data-name"))
+			var fmt = "YYYY-MM-DD HH:mm:ss"
+			
+			// exit if not row was found
+			if ( ! row) { return ; }
 
-				var row = frappe.get_doc("Tarea de Proyecto", $(html_row).attr("data-name"))
-				var fmt = "YYYY-MM-DD HH:mm:ss"
+			var status = row.status
 
-				if (row) {
-					var status = row.status
+			var colors = {
+				"Open": "blue",
+				"Delayed": "red",
+				"Overdue": "red",
+				"Working": "blue",
+				"Closed": "green",
+				"Cancelled": "grey",
+				"Pending Review": "blue"
+			}
 
-					var colors = {
-						"Open": "blue",
-						"Delayed": "red",
-						"Overdue": "red",
-						"Working": "blue",
-						"Closed": "green",
-						"Cancelled": "grey",
-						"Pending Review": "blue"
-					}
+			if (status == "Open" || status == "Pending Review" || status == "Working") {
 
-					if (status == "Open" || status == "Pending Review" || status == "Working") {
+				var any_pending = false
+				if (row.dependant) {
+					$(html_row).find(".octicon.octicon-triangle-down")
+						.removeClass()
+						.addClass("octicon octicon-mail-reply")
 
-						var any_pending = false
-						if (row.dependant) {
-							$(html_row).find(".octicon.octicon-triangle-down")
-								.removeClass()
-								.addClass("octicon octicon-mail-reply")
+					var dependant_list = (row.depends_on || "").split(", ")
 
-							var dependant_list = (row.depends_on || "").split(", ")
+					$.map(dependant_list, function(subject) {
+						if ( ! subject) return 0.000
 
-							$.map(dependant_list, function(subject) {
-								if ( ! subject) return 0.000
+						task = frappe.get_doc("Tarea de Proyecto", { "title": subject })
 
-								task = frappe.get_doc("Tarea de Proyecto", { "title": subject })
-
-								if (task.status != "Closed" || task.status != "Cancelled") {
-									any_pending = true
-								}
-							})
-
-							if (any_pending && moment().format(fmt) > row.start_date) {
-								status = "Delayed"
-							} else {
-								status = "Open"
-								colors["Open"] = "blue"
-							}
-						} else {
-							if (moment().format(fmt) > row.start_date) {
-								status = "Delayed"
-							}
+						if (task.status != "Closed" || task.status != "Cancelled") {
+							any_pending = true
 						}
+					})
+
+					if (any_pending && moment().format(fmt) > row.start_date) {
+						status = "Delayed"
+					} else {
+						status = "Open"
+						colors["Open"] = "blue"
 					}
-
-					$(this).find("[data-fieldname=title]").find(".static-area.ellipsis")
-						.find("span").remove()
-
-					$(this).find("[data-fieldname=title]").find(".static-area.ellipsis")
-					.prepend(__("<span title=\"{1}\" class=\"indicator {0}\"></span>", 
-						[colors[status], status]))
+				} else {
+					if (moment().format(fmt) > row.start_date) {
+						status = "Delayed"
+					}
 				}
-			})
+			}
+
+			$(this).find("[data-fieldname=title]").find(".static-area.ellipsis")
+				.find("span").remove()
+
+			$(this).find("[data-fieldname=title]").find(".static-area.ellipsis")
+				.prepend(__("<span title=\"{1}\" class=\"indicator {0}\"></span>", 
+					[colors[status], status]))
+		}
+
+		frm.page.body.find("[data-fieldname=tasks]").find(".grid-body")
+			.find(".grid-row").each(do_for_each)
 		frm.body.find(".octicon.octicon-triangle-down").hide()
 	},
 	set_item_query: function(frm) {
@@ -270,27 +282,30 @@ frappe.ui.form.on('Proyecto', {
 		}
 	},
 	set_todays_date_as_start_date: function(frm) {
-		var fmt = "YYYY-MM-DD HH:mm:ss"
-		var now_datetime = frappe.datetime.now_datetime()
-		var m = moment(now_datetime, fmt)
+		frm.set_value("expected_start_date", 
+			frappe.datetime.now_datetime())
 
-		if (frappe.datetime.now_time() < "08:00:00") {
-			// let's put it to the 8:00 o'clock
-			var today = frappe.datetime.now_date()
+		// var fmt = "YYYY-MM-DD HH:mm:ss"
+		// var now_datetime = frappe.datetime.now_datetime()
+		// var m = moment(now_datetime, fmt)
 
-			frm.set_value("expected_start_date", today + " 08:00:00")
-		} else if (frappe.datetime.now_time() < "17:00:00") {
-			// this is working hours then
-			var now_time = m.startOf("hour")
-			var an_hour_later = now_time.add(1, "hour")
+		// if (frappe.datetime.now_time() < "08:00:00") {
+		// 	// let's put it to the 8:00 o'clock
+		// 	var today = frappe.datetime.now_date()
+
+		// 	frm.set_value("expected_start_date", today + " 08:00:00")
+		// } else if (frappe.datetime.now_time() < "17:00:00") {
+		// 	// this is working hours then
+		// 	var now_time = m.startOf("hour")
+		// 	var an_hour_later = now_time.add(1, "hour")
 			
-			frm.set_value("expected_start_date", an_hour_later.format(fmt))
-		} else {
-			// this must be for tomorrow
-			var tomorrow = m.add(1, "days").format("YYYY-MM-DD")
+		// 	frm.set_value("expected_start_date", an_hour_later.format(fmt))
+		// } else {
+		// 	// this must be for tomorrow
+		// 	var tomorrow = m.add(1, "days").format("YYYY-MM-DD")
 
-			frm.set_value("expected_start_date", tomorrow + " 08:00:00")
-		}
+		// 	frm.set_value("expected_start_date", tomorrow + " 08:00:00")
+		// }
 	},
 	show_prompt: function(frm) {
 

@@ -32,6 +32,8 @@ frappe.listview_settings["Ensamblador de Productos"] = {
 				})
 			}
 		}
+		
+		pws.utils.get_table("Opciones de Proteccion Items", "opciones_de_proteccion", value, callback)
 		pws.utils.get_table("Opciones de Textura Items", "opciones_de_textura", value, callback)
 		pws.utils.get_table("Opciones de Utilidad Items", "opciones_de_utilidad", value, callback)
 

@@ -11,6 +11,7 @@ from frappe.model.naming import make_autoname
 from frappe.utils import flt
 
 class EnsambladordeProductos(Document):
+	prev_field = 0
 	def autoname(self):
 		self.validate()
 		self.name = self.new_name
@@ -42,7 +43,9 @@ class EnsambladordeProductos(Document):
 		if (self.get(key) if isinstance(self.get(key), basestring) else str(self.get(key)))] 
 
 		pre_hash = "".join(array).upper()
-		frappe.errprint("pre_hash {}".format(pre_hash))
+
+		pre_hash_with_textures = "{0}{1}".format(pre_hash,
+			self.get_proteccion_names())
 
 		pre_hash_with_textures = "{0}{1}".format(pre_hash,
 			self.get_textura_names())
@@ -63,12 +66,21 @@ class EnsambladordeProductos(Document):
 
 		return new_hash
 
+	def get_proteccion_names(self):
+		array = ""
+
+		for textura in self.opciones_de_proteccion:
+			array += "".join(
+				gut(textura.opciones_de_proteccion))
+
+		return "".join(array)
+
 	def get_textura_names(self):
 		array = ""
 
-		for textura in self.opciones_de_textura:
+		for proteccion in self.opciones_de_textura:
 			array += "".join(
-				gut(textura.opciones_de_textura))
+				gut(proteccion.opciones_de_textura))
 
 		return "".join(array)
 
@@ -93,7 +105,6 @@ class EnsambladordeProductos(Document):
 			"opciones_de_control",
 			"opciones_de_empalme",
 			"opciones_de_plegado",
-			"opciones_de_proteccion",
 			"opciones_de_corte",
 		]
 
@@ -147,6 +158,7 @@ class EnsambladordeProductos(Document):
 		new_desc =  description.replace("Tiro,   +", "+")\
 			.replace("Retiro,   +", "+")
 			
+		self.prev_field = 0
 		return new_desc
 
 	def on_trash(self):
@@ -163,11 +175,12 @@ class EnsambladordeProductos(Document):
 
 		d = {
 			"cantidad_tiro_proceso": "{0} {1} Proceso Tiro".format(self.get(field), color_o_colores) if not flt(self.get(field)) > 3.000 else "Full Color Tiro",
-			"cantidad_tiro_pantone": "+ {0} {1} Pantone Tiro".format(self.get(field), color_o_colores),
-			"cantidad_proceso_retiro": "{0} {1} Proceso Retiro".format(self.get(field), color_o_colores) if not flt(self.get(field)) > 3.000 else "Full Color Pantone Retiro",
-			"cantidad_pantone_retiro": "+ {0} {1} Pantone Retiro".format(self.get(field), color_o_colores)
+			"cantidad_tiro_pantone": "{0} {1} Pantone Tiro".format("+ %s" % self.get(field) if self.prev_field and flt(self.get(self.prev_field)) else self.get(field), color_o_colores),
+			"cantidad_proceso_retiro": "{0} {1} Proceso Retiro".format(self.get(field), color_o_colores) if not flt(self.get(field)) > 3.000 else "Full Color Proceso Retiro",
+			"cantidad_pantone_retiro": "{0} {1} Pantone Retiro".format("+ %s" % self.get(field) if self.prev_field and flt(self.get(self.prev_field)) else self.get(field), color_o_colores)
 		}
 
+		self.prev_field = self.get(field)
 		if d.get(field):
 			return " {}".format(d.get(field))
 
