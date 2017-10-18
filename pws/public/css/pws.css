@@ -3,10 +3,18 @@
 }
 
 ::-webkit-scrollbar {
-    width: 0px;  /* remove scrollbar space */
-    background: transparent;  /* optional: just make scrollbar invisible */
+	width: 0px;  /* remove scrollbar space */
+	background: transparent;  /* optional: just make scrollbar invisible */
 }
 
 #dropdown-notification .progress-small[data-doctype=Company] {
+	display: none;
+}
+
+.form-print-wrapper .btn-print-print.btn-sm.btn.btn-default {
+	display: none;
+}
+
+.form-print-wrapper .checkbox.small {
 	display: none;
 }

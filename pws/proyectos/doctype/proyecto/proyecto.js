@@ -49,7 +49,7 @@ frappe.ui.form.on('Proyecto', {
 		$(".layout-main .form-column.col-sm-12 > form > .input-max-width").css("min-width", "100%")
 	},
 	validate: function(frm) {
-		if ( ! frm.doc.production_qty) {
+		if ( ! flt(frm.doc.production_qty)) {
 			frappe.throw("¡Cantidad a producir es invalida!")
 		}
 	},
@@ -63,7 +63,7 @@ frappe.ui.form.on('Proyecto', {
 		}, 99)
 	},
 	set_queries: function(frm) {
-		var events = ["set_item_query"]
+		var events = ["set_item_query", "set_sales_order_query"]
 
 		$.map(events, function(event) {
 			frm.trigger(event)
@@ -76,7 +76,7 @@ frappe.ui.form.on('Proyecto', {
 		var fields = [
 			"company", "customer",
 			"estimated_costing",
-			"expected_end_date", "expected_start_date",
+			"expected_end_date",
 			"gross_margin", "is_active",
 			"item", "item_name", "notes",
 			"per_gross_margin",
@@ -93,9 +93,18 @@ frappe.ui.form.on('Proyecto', {
 			frm.toggle_enable(key, is_same_user || is_manager || frm.is_new())
 		})
 
-		if (( ! frm.is_new() || ! is_same_user) && ! is_manager ) {
+		if ( ! frm.is_new() && ! is_manager && ! is_same_user) {
 			frm.disable_save()
 		}
+	},
+	set_sales_order_query: function(frm) {
+		frm.set_query("sales_order", function() {
+			return {
+				"filters": {
+					"docstatus": "1"
+				}
+			}
+		})
 	},
 	set_view_task: function(frm) {
 		var row = frm.body.find("div[data-fieldname=tasks]")
@@ -107,7 +116,7 @@ frappe.ui.form.on('Proyecto', {
 			var task_id = frappe.model.get_value("Tarea de Proyecto", docname, "task_id")
 				
 			if (task_id) {
-				$me.find("*").off()
+				$me.off().find("*").off()
 
 				$me.on("click", function(event) {
 					if (docname) {
@@ -137,7 +146,7 @@ frappe.ui.form.on('Proyecto', {
 			}
 
 			if (frm.doc.dependant && pws.prev_closed_date) {
-				m = moment(frm.doc.closed_date, fmt)
+				m = moment(pws.prev_closed_date, fmt)
 			} else {
 				m = moment(exp_start_date, fmt)
 			}
@@ -192,34 +201,39 @@ frappe.ui.form.on('Proyecto', {
 				"Pending Review": "blue"
 			}
 
+			if (row.dependant) {
+				$(html_row).find(".octicon.octicon-triangle-down")
+					.removeClass()
+					.addClass("octicon octicon-mail-reply")
+			}
+			
 			if (status == "Open" || status == "Pending Review" || status == "Working") {
 
 				var any_pending = false
 				if (row.dependant) {
-					$(html_row).find(".octicon.octicon-triangle-down")
-						.removeClass()
-						.addClass("octicon octicon-mail-reply")
 
 					var dependant_list = (row.depends_on || "").split(", ")
 
 					$.map(dependant_list, function(subject) {
-						if ( ! subject) return 0.000
+						if ( ! subject) { return ; }
 
 						task = frappe.get_doc("Tarea de Proyecto", { "title": subject })
 
-						if (task.status != "Closed" || task.status != "Cancelled") {
+						if ( ! task) { return ; }
+
+						if (task.status != "Closed") {
 							any_pending = true
 						}
 					})
 
-					if (any_pending && moment().format(fmt) > row.start_date) {
+					if ( ! any_pending && moment().format(fmt) > row.end_date) {
 						status = "Delayed"
 					} else {
 						status = "Open"
 						colors["Open"] = "blue"
 					}
 				} else {
-					if (moment().format(fmt) > row.start_date) {
+					if (moment().format(fmt) > row.end_date) {
 						status = "Delayed"
 					}
 				}
@@ -235,10 +249,11 @@ frappe.ui.form.on('Proyecto', {
 
 		frm.page.body.find("[data-fieldname=tasks]").find(".grid-body")
 			.find(".grid-row").each(do_for_each)
+
 		frm.body.find(".octicon.octicon-triangle-down").hide()
 	},
 	set_item_query: function(frm) {
-		var query = "pws.queries.item_manufactured_query"
+		var query = "pws.queries.item_query"
 
 		frm.set_query("item", function() {
 			return {

@@ -62,5 +62,11 @@ frappe.ui.form.on('Dimensiones', {
 			return { "filters": filters }
 		})
 	},
+	width: function(frm) {
+		frm.set_value("width", Math.round(frm.doc.width * 16, 0)/16)
+	},
+	height: function(frm) {
+		frm.set_value("height", Math.round(frm.doc.height * 16, 0)/16)
+	},
 })
 

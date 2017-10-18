@@ -7,7 +7,7 @@ import pws.utils
 
 from frappe.utils import flt
 
-def s_sanitize(string):
+def s_sanitize(string, upper=True):
 	"""Remove the most common special caracters"""
 
 	special_cars = [
@@ -25,7 +25,11 @@ def s_sanitize(string):
 	for pair in special_cars:
 		s_sanitized = s_sanitized.replace(pair[0], pair[1])
 
-	return s_sanitized.upper()
+	if upper:
+		return s_sanitized.upper()
+
+	return s_sanitized
+
 
 def s_strip(string):
 	"""Clean and convert a string into a valid variable name"""
@@ -158,5 +162,8 @@ def get_parent_code(item_group, array=[]):
     return get_parent_code(doc.parent_item_group, array)
 
 def on_session_creation():
+	# if not frappe.session.user == "ezequiel@printworks.do":
+	# 	frappe.throw("Estamos trabajando en el sistema. Intente mas tarde!")
+		
 	msg = "User {0} has been logged in at {1}!".format(frappe.session.user, frappe.utils.now_datetime())
 	frappe.publish_realtime(event='msgprint', message=msg, user='yefritavarez@gmail.com') 

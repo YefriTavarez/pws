@@ -289,7 +289,7 @@ frappe.ui.form.on('Ensamblador de Productos', {
 			]
 
 			$.each(fields, function(idx, fieldname) {
-				var hide = !!!pws.profiler[fieldname].length
+				var hide = !!! pws.profiler[fieldname].length
 
 				frm.set_df_property(fieldname, "hidden", hide)
 				frm.set_df_property(fieldname + "_sb", "hidden", hide)

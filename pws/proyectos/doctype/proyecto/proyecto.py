@@ -33,24 +33,16 @@ class Proyecto(Document):
 			})
 
 		self.update_percent_complete()
+		self.update_costs()
 
 	def autoname(self):
-		name_sanitized = s_sanitize(self.project_type)
+		# name_sanitized = s_sanitize(self.project_type)
 
-		first_two = gut(name_sanitized, size=3)
+		# first_two = gut(name_sanitized, size=3)
 
-		naming_serie = "{0}-.#####".format(*first_two)
+		naming_serie = "PROY-.#####"
 
 		self.name = autoname(naming_serie)
-
-	# def after_insert(self):
-	# 	assign_to({
-	# 		"doctype": self.doctype,
-	# 		"name": self.name,
-	# 		"assign_to": self.project_manager,
-	# 		"description": "El proyecto {0} ({1}) ha sido encargado a usted"
-	# 			.format(self.name, self.project_name)
-	# 		})
 	
 	def after_insert(self):
 		self.sync_tasks()
@@ -67,11 +59,9 @@ class Proyecto(Document):
 		self.db_update()
 
 	def validate(self):
-		dirty_name = self.collect_names()
+		name_sanitized = self.collect_names()
 
-		name_sanitized = s_sanitize(dirty_name)
-
-		self.title = name_sanitized.title()
+		self.title = name_sanitized
 
 	def update_percent_complete(self):
 
@@ -81,11 +71,59 @@ class Proyecto(Document):
 		self.percent_complete = flt(closed_tasks) / (not_closed_tasks or 1.000) * 100.000
 
 	def collect_names(self):
-		fields = ["project_type", "customer", "item_name", 
-			"project_name", "production_qty"]
+		self.item_name = frappe.get_value("Item", self.item, "item_name")		
+		if "," in self.item_name:
+			arr = self.item_name.split(',', 1)
+			
+			self.item_name = "{0} ({1}), {2}".format(arr[0], self.project_name, arr[1])
+		else:
+			self.item_name = "{0} ({1})".format(self.item_name, self.project_name)
 
-		return "{0}: {1} - {2} ({3}), Cant. {4}".format(*[
-			self.get(field) for field in fields])
+		fields = ["project_type", "customer", "item_name", 
+			"production_qty"]
+
+		return "{0}: {1} - {2}, Cant. {3}".format(*[
+			s_sanitize(self.get(field), upper=False) for field in fields])
+
+	def update_costs(self):
+		self.total_purchase_cost = frappe.db.sql("""SELECT 
+				SUM(child.amount)
+			FROM `tabPurchase Invoice Item` as child 
+			JOIN `tabPurchase Invoice` as parent
+			ON parent.name = child.parent
+			WHERE parent.docstatus = 1
+			AND child.proyecto = %s
+		""", (self.name))[0][0]
+
+		self.total_purchase_order_cost = frappe.db.sql("""SELECT
+				SUM(child.amount) 
+			FROM
+				`tabPurchase Order Item` AS child 
+				JOIN
+					`tabPurchase Order` AS parent 
+					ON child.parent = parent.name 
+			WHERE
+				parent.docstatus = 1 
+				AND child.proyecto = %s """, (self.name))[0][0]
+
+		self.total_sales_cost = frappe.db.sql("""SELECT
+				SUM(child.amount) 
+			FROM
+				`tabSales Order Item` AS child 
+				JOIN
+					`tabSales Order` AS parent 
+					ON child.parent = parent.name 
+			WHERE
+				parent.docstatus = 1 
+				AND child.proyecto = %s""", (self.name))[0][0]
+
+		# self.total_sales_invoice_cost = frappe.db.sql("""SELECT
+		# 		SUM(total) 
+		# 	FROM
+		# 		`tabSales Invoice` 
+		# 	WHERE
+		# 		docstatus = 1 
+		# 		AND proyecto = %s""", (self.name))[0][0]
 
 	def create_project(self):
 		self.set("tasks", [])
@@ -168,10 +206,15 @@ def attach_file(doctype, docname, filedata):
 	fd_list = list(fd_json["files_data"])
 
 	for fd in fd_list:
+		# frappe.errprint("fd['file_name'] {}".format(fd['file_name']))
 		file_list = frappe.get_list("File", { "file_name": ["like", "{}%".format(fd["filename"])]})
+		# frappe.errprint("fd['filename'] {}".format(fd['filename']))
 
 		if file_list:
 			fd["filename"] = fd["filename"].replace(".pdf", "-{}.pdf".format(len(file_list) +1))
+		
+		# fd["dataurl"] = "{} {}".format(fd["dataurl"], fd["filename"])
+		# frappe.errprint("fd['dataurl'] {}".format(fd['dataurl']))
 
 		filedoc = save_file(fd["filename"], fd["dataurl"], 
 			doctype, docname, decode=True, is_private=True)

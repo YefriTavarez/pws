@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import frappe
-from frappe.utils import now_datetime
+from frappe.utils import now_datetime, flt
 
 def all():
 	update_task_start_times()
 
 def hourly():
-	pass
+	set_as_completed_projects()
 
 def daily():
 	close_projects()
@@ -31,7 +31,7 @@ def update_task_start_times():
 	for cur_dict in no_closed_task_list:
 		task = frappe.get_doc("Tarea", cur_dict.name)
 		
-		if task.dependant:
+		if flt(task.dependant):
 			opts = frappe._dict({
 				"as_datetime": True,
 				"date": get_latest_close_date(task),
@@ -42,12 +42,12 @@ def update_task_start_times():
 
 			# check if it is not updated yet
 			if not exp_end_date == task.exp_end_date:
-				if not task.exp_start_date or task.exp_start_date > now_datetime():
+				if not task.exp_end_date or task.exp_end_date < now_datetime():
 					task.exp_start_date = get_latest_close_date(task)
 					task.exp_end_date = exp_end_date
 					task.db_update()
 				
-			if not is_there_any_pending_task(task):
+			elif not is_there_any_pending_task(task) and task.exp_end_date < now_datetime():
 				task.status = "Overdue"
 				task.db_update()
 
@@ -74,22 +74,44 @@ def close_projects():
 		doc.db_update()
 
 def get_latest_close_date(task):
-	latest_close_date = None
-
-	for dependee in task.depends_on:
-		task_closed_date = frappe.get_value("Tarea", dependee.get("task"), "close_date")
-
-		if not latest_close_date or latest_close_date < task_closed_date:
-			latest_close_date = task_closed_date
-
-	return latest_close_date
+	return frappe.db.sql("""SELECT
+		MAX(tarea_dependiente.close_date) 
+	FROM
+		`tabTarea Dependiente de` AS dependiente 
+		JOIN
+			tabTarea AS current 
+			ON current.name = dependiente.parent 
+		JOIN
+			tabTarea AS tarea_dependiente 
+			ON dependiente.task = tarea_dependiente.name 
+	WHERE
+		current.name = %s""", (task.name))[0][0]
 
 def is_there_any_pending_task(task):
 	is_there_one = False
 
 	for dependee in task.depends_on:
 		task_status = frappe.get_value("Tarea", dependee.get("task"), "status")
-		is_there_one = not task_status == "Closed"
+		
+		if not task_status == "Closed":
+			return True
 
 	return is_there_one
+
+def set_as_completed_projects():
+	project_list = frappe.get_list("Proyecto", {
+		"status": "Open"
+	})
+
+	for current in project_list:
+		project = frappe.get_doc("Proyecto", current.name)
+
+		project.onload()
+
+		if not [task for task in project.tasks if not task.status == 'Closed']:
+			project.set('status', 'Completed')
+		else:
+			project.set('status', 'Open')
+
+		project.db_update()
 

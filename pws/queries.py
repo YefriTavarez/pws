@@ -4,6 +4,11 @@
 
 import frappe
 
+conf = frappe._dict({
+	"item_group": frappe.db.get_single_value("Configuracion General", "item_group"),
+	"materials_item_group": frappe.db.get_single_value("Configuracion General", "materials_item_group")
+	})
+
 def product_type_query(doctype, txt, searchfield, start, page_len, filters):
 	item_group_list = frappe.get_list("Item Group", {
 		"is_group": "0",
@@ -44,10 +49,10 @@ def ens_control_query(doctype, txt, searchfield, start, page_len, filters):
 			ON tecnologia_opts.technology = tecnologia_material.technology 
 		JOIN `tabMaterial de Impresion` AS material 
 			ON material.name = tecnologia_material.parent 
-	WHERE perfilador.name = '{0}' 
-		AND material.name = '{1}'
-		AND opt_items.opciones_de_control like '{2}' """
-	.format(filters.get("perfilador"), filters.get("material"), 
+	WHERE perfilador.name = %s 
+		AND material.name = %s
+		AND opt_items.opciones_de_control like %s """,
+	(filters.get("perfilador"), filters.get("material"), 
 		"%{}%".format(txt) if txt else "%"), as_dict=True)
 
 	return [[row.opciones_de_control] for row in control_list]
@@ -65,10 +70,10 @@ def ens_corte_query(doctype, txt, searchfield, start, page_len, filters):
 				ON tecnologia_opts.technology = tecnologia_material.technology 
 			JOIN `tabMaterial de Impresion` AS material 
 				ON material.name = tecnologia_material.parent 
-		WHERE perfilador.name = '{0}' 
-			AND material.name = '{1}'
-			AND opt_items.opciones_de_corte like '{2}' """
-		.format(filters.get("perfilador"), filters.get("material"), 
+		WHERE perfilador.name = %s 
+			AND material.name = %s
+			AND opt_items.opciones_de_corte like %s """,
+		(filters.get("perfilador"), filters.get("material"), 
 			"%{}%".format(txt) if txt else "%"), as_dict=True)
 
 	return [[row.opciones_de_corte] for row in corte_list]
@@ -86,10 +91,10 @@ def ens_empalme_query(doctype, txt, searchfield, start, page_len, filters):
 				ON tecnologia_opts.technology = tecnologia_material.technology 
 			JOIN `tabMaterial de Impresion` AS material 
 				ON material.name = tecnologia_material.parent 
-		WHERE perfilador.name = '{0}' 
-			AND material.name = '{1}'
-			AND opt_items.opciones_de_empalme like '{2}' """
-		.format(filters.get("perfilador"), filters.get("material"), 
+		WHERE perfilador.name = %s 
+			AND material.name = %s
+			AND opt_items.opciones_de_empalme like %s """,
+		(filters.get("perfilador"), filters.get("material"), 
 			"%{}%".format(txt) if txt else "%"), as_dict=True)
 
 	return [[row.opciones_de_empalme] for row in empalme_list]
@@ -107,10 +112,10 @@ def ens_plegado_query(doctype, txt, searchfield, start, page_len, filters):
 				ON tecnologia_opts.technology = tecnologia_material.technology 
 			JOIN `tabMaterial de Impresion` AS material 
 				ON material.name = tecnologia_material.parent 
-		WHERE perfilador.name = '{0}' 
-			AND material.name = '{1}'
-			AND opt_items.opciones_de_plegado like '{2}' """
-		.format(filters.get("perfilador"), filters.get("material"), 
+		WHERE perfilador.name = %s 
+			AND material.name = %s
+			AND opt_items.opciones_de_plegado like %s """,
+		(filters.get("perfilador"), filters.get("material"), 
 			"%{}%".format(txt) if txt else "%"), as_dict=True)
 
 	return [[row.opciones_de_plegado] for row in plegado_list]
@@ -128,10 +133,10 @@ def ens_proteccion_query(doctype, txt, searchfield, start, page_len, filters):
 				ON tecnologia_opts.technology = tecnologia_material.technology 
 			JOIN `tabMaterial de Impresion` AS material 
 				ON material.name = tecnologia_material.parent 
-		WHERE perfilador.name = '{0}' 
-			AND material.name = '{1}'
-			AND opt_items.opciones_de_proteccion like '{2}' """
-		.format(filters.get("perfilador"), filters.get("material"), 
+		WHERE perfilador.name = %s 
+			AND material.name = %s
+			AND opt_items.opciones_de_proteccion like %s """,
+		(filters.get("perfilador"), filters.get("material"), 
 			"%{}%".format(txt) if txt else "%"), as_dict=True)
 
 	return [[row.opciones_de_proteccion] for row in proteccion_list]
@@ -149,10 +154,10 @@ def ens_utilidad_query(doctype, txt, searchfield, start, page_len, filters):
 				ON tecnologia_opts.technology = tecnologia_material.technology 
 			JOIN `tabMaterial de Impresion` AS material 
 				ON material.name = tecnologia_material.parent 
-		WHERE perfilador.name = '{0}' 
-			AND material.name = '{1}'
-			AND opt_items.opciones_de_utilidad like '{2}' """
-		.format(filters.get("perfilador"), filters.get("material"), 
+		WHERE perfilador.name = %s 
+			AND material.name = %s
+			AND opt_items.opciones_de_utilidad like %s """,
+		(filters.get("perfilador"), filters.get("material"), 
 			"%{}%".format(txt) if txt else "%"), as_dict=True)
 
 	return [[row.opciones_de_utilidad] for row in utilidad_list]
@@ -170,10 +175,10 @@ def ens_textura_query(doctype, txt, searchfield, start, page_len, filters):
 				ON tecnologia_opts.technology = tecnologia_material.technology 
 			JOIN `tabMaterial de Impresion` AS material 
 				ON material.name = tecnologia_material.parent 
-		WHERE perfilador.name = '{0}' 
-			AND material.name = '{1}'
-			AND opt_items.opciones_de_textura like '{2}' """
-		.format(filters.get("perfilador"), filters.get("material"), 
+		WHERE perfilador.name = %s 
+			AND material.name = %s
+			AND opt_items.opciones_de_textura like %s """,
+		(filters.get("perfilador"), filters.get("material"), 
 			"%{}%".format(txt) if txt else "%"), as_dict=True)
 
 	return [[row.opciones_de_textura] for row in textura_list]
@@ -187,7 +192,6 @@ def ens_dimension_query(doctype, txt, searchfield, start, page_len, filters):
 	return [[row.parent] for row in dimension_list]
 
 def item_manufactured_query(doctype, txt, searchfield, start, page_len, filters):
-	default_item_group = frappe.db.get_single_value("Configuracion General", "item_group")
 
 	item_list = frappe.db.sql("""SELECT item.name, item.description 
 		FROM `tabItem` AS item 
@@ -199,7 +203,7 @@ def item_manufactured_query(doctype, txt, searchfield, start, page_len, filters)
 				OR 
 					item.description LIKE '%{1}%'
 				)
-		""".format(default_item_group, txt))
+		""".format(conf.item_group, txt))
 
 	return item_list
 
@@ -210,3 +214,56 @@ def project_template_query(doctype, txt, searchfield, start, page_len, filters):
 	}, ["name"], order_by="name")
 
 	return [[row.name] for row in template_list]
+
+def item_query(doctype, txt, searchfield, start, page_len, filters):
+	txt = "%".join(txt.split())
+
+	item_list = frappe.get_list("Item", {
+		"disabled": "0",
+		# "item_group_1": conf.materials_item_group if filters and filters.get("buying") else conf.item_group,
+		"description": ["like", "%{}%".format(txt) if txt else "%"]
+	}, ["name", "description"], order_by="name")
+
+	return [[row.name, row.description] for row in item_list]
+
+def project_customer(doctype, txt, searchfield, start, page_len, filters):
+	txt = "%".join(txt.split())
+
+	customer_list = frappe.get_list("Proyecto", {
+		"title": ["like", "%{}%".format(txt) if txt else "%"],
+		"status": filters.get("status"),
+	}, ["distinct customer"], order_by="customer")
+
+	return [[row.customer] for row in customer_list]
+
+def project_item(doctype, txt, searchfield, start, page_len, filters):
+	txt = "%".join(txt.split())
+
+	item_list = frappe.get_list("Proyecto", {
+		"title": ["like", "%{}%".format(txt) if txt else "%"],
+		"customer": filters.get("customer")
+	}, ["distinct item", "item_name"], order_by="customer")
+
+	return [[row.item, row.item_name] for row in item_list]
+
+def ordered_item_group_query(doctype, txt, searchfield, start, page_len, filters):
+	txt = txt and "%".join(txt.split())
+
+	item_group_list = frappe.db.sql("""SELECT
+			name, item_group_code 
+		FROM
+			`tabItem Group` 
+		WHERE
+			parent_item_group = %s 
+			AND name LIKE %s 
+		ORDER BY
+			name""", (filters.get("parent_item_group"), "%{}%".format(txt) if txt else "%"),
+	as_dict=True)
+
+
+	# item_group_list = frappe.get_list("Item Group", {
+	# 	"item_group_name": ["like", "%{}%".format(txt) if txt else "%"],
+	# 	"parent_item_group": filters.get("parent_item_group"),
+	# }, ["item_group_code", "name"], order_by="creation")
+
+	return [[row.name] for row in item_group_list]

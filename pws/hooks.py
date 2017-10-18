@@ -135,3 +135,6 @@ website_context = {
 	"logo": "/assets/pws/images/favicon.png",
 	"splash_image": "/assets/pws/images/erp-icon.svg"
 }
+
+default_mail_footer = """
+"""

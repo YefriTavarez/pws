@@ -12,18 +12,10 @@ from frappe.utils import flt
 
 class EnsambladordeProductos(Document):
 	prev_field = 0
-	def autoname(self):
-		self.validate()
-		self.name = self.new_name
-
-	def validate(self):
-		new_hash = self.make_new_hash()
-
-		self.hash = new_hash.upper()
-
-		self.after_validate()
-
-	def after_validate(self):
+	def before_insert(self):
+		# fields that are integers but are rendered
+		# as dropdown lists and hence treated as string 
+		# are coverted to integer
 		number_fields = [
 			"cantidad_tiro_proceso",
 			"cantidad_tiro_pantone",
@@ -31,15 +23,47 @@ class EnsambladordeProductos(Document):
 			"cantidad_pantone_retiro"
 		]
 
+		# here's where magic is happening
 		for field in number_fields:
 			self.set(field, int(self.get(field)))
 
-		self.create_item()
+		self.create_or_update_item(create=True)
+
+	def autoname(self):
+		# this is where the name is set
+		self.name = self.new_name
+
+	def validate(self):
+
+		# generate a new hash for helping to identify
+		# the sku (an Item in ERPNext)
+		new_hash = self.make_new_hash()
+
+		self.hash = new_hash.upper()
+
+		self.update_item()
+
+	def update_item(self):
+		# fields that are integers but are rendered
+		# as dropdown lists and hence treated as string 
+		# are coverted to integer
+		number_fields = [
+			"cantidad_tiro_proceso",
+			"cantidad_tiro_pantone",
+			"cantidad_proceso_retiro",
+			"cantidad_pantone_retiro"
+		]
+
+		# here's where magic is happening
+		for field in number_fields:
+			self.set(field, int(self.get(field)))
+
+		self.create_or_update_item(create=False)
 
 	def make_new_hash(self):
 		array = ["".join(
 			gut(self.get(key)))
-			for key in self.get_fields() 
+			for key in self.get_description_fields() 
 		if (self.get(key) if isinstance(self.get(key), basestring) else str(self.get(key)))] 
 
 		pre_hash = "".join(array).upper()
@@ -69,7 +93,7 @@ class EnsambladordeProductos(Document):
 	def get_proteccion_names(self):
 		array = ""
 
-		for textura in self.opciones_de_proteccion:
+		for textura in sorted(self.opciones_de_proteccion):
 			array += "".join(
 				gut(textura.opciones_de_proteccion))
 
@@ -78,7 +102,7 @@ class EnsambladordeProductos(Document):
 	def get_textura_names(self):
 		array = ""
 
-		for proteccion in self.opciones_de_textura:
+		for proteccion in sorted(self.opciones_de_textura):
 			array += "".join(
 				gut(proteccion.opciones_de_textura))
 
@@ -87,7 +111,7 @@ class EnsambladordeProductos(Document):
 	def get_utility_names(self):
 		array = ""
 
-		for utilidad in self.opciones_de_utilidad:
+		for utilidad in sorted(self.opciones_de_utilidad):
 			array += "".join(
 				gut(utilidad.opciones_de_utilidad))
 
@@ -97,20 +121,50 @@ class EnsambladordeProductos(Document):
 		return [
 			"perfilador_de_productos",
 			"materials_title",
+			"dimension",
 			"cantidad_tiro_proceso",
 			"cantidad_tiro_pantone",
 			"cantidad_proceso_retiro",
 			"cantidad_pantone_retiro",
-			"dimension",
 			"opciones_de_control",
-			"opciones_de_empalme",
 			"opciones_de_plegado",
 			"opciones_de_corte",
+			"opciones_de_empalme",
 		]
 
-	def create_item(self):
+	def get_description_fields(self):
+		protecciones_list = []
+		utilidades_list = []
+
+		for proteccion in self.opciones_de_proteccion:
+			protecciones_list.append(" ".join(gut(proteccion.opciones_de_proteccion)))
+
+		for utilidad in self.opciones_de_utilidad:
+			utilidades_list.append(" ".join(gut(utilidad.opciones_de_utilidad)))
+
+		self.protecciones = ", ".join(protecciones_list)
+		self.utilidades = ", ".join(utilidades_list)
+
+		return [
+			"perfilador_de_productos",
+			"materials_title",
+			"dimension",
+			"cantidad_tiro_proceso",
+			"cantidad_tiro_pantone",
+			"cantidad_proceso_retiro",
+			"cantidad_pantone_retiro",
+			"opciones_de_control",
+			"protecciones",
+			"opciones_de_corte",
+			"opciones_de_plegado",
+			"opciones_de_empalme",
+			"utilidades"
+		]
+
+	def create_or_update_item(self, create=False):
 		# new item allocated
-		item = frappe.new_doc("Item")
+
+		item = create and frappe.new_doc("Item")
 
 		# from the bottom to the top choose the first one with value
 		item_group = self.item_group_4 or self.item_group_3 or self.item_group_2 or self.item_group_1
@@ -122,15 +176,12 @@ class EnsambladordeProductos(Document):
 		item_name = "{0}, {1}, {2}".format(self.perfilador_de_productos, self.materials_title, self.dimension)
 
 		# if the item exists
-		if frappe.get_value("Item", { "hash": self.hash }):
+		if frappe.get_value("Item", { "name": self.item }):
 			# let's load it and use it
-			item = frappe.get_doc("Item", { "hash": self.hash })
+			item = frappe.get_doc("Item", { "name": self.item })
+
 
 		description = self.get_self_description()
-
-		for utilidad in self.opciones_de_utilidad:
-			description ="{0}, {1}".format(description, " ".join(
-				gut(utilidad.opciones_de_utilidad)))
 
 		item.update({
 			"item_code": item_name,
@@ -148,11 +199,14 @@ class EnsambladordeProductos(Document):
 		})
 
 		item.save()
+
+		# update refs
 		self.new_name = item.name
+		self.item = item.name
 
 	def get_self_description(self):
 		description = ", ".join([self.get_label(field)
-			for field in self.get_fields() 
+			for field in self.get_description_fields() 
 			if self.get(field)])
 
 		new_desc =  description.replace("Tiro,   +", "+")\
@@ -176,7 +230,7 @@ class EnsambladordeProductos(Document):
 		d = {
 			"cantidad_tiro_proceso": "{0} {1} Proceso Tiro".format(self.get(field), color_o_colores) if not flt(self.get(field)) > 3.000 else "Full Color Tiro",
 			"cantidad_tiro_pantone": "{0} {1} Pantone Tiro".format("+ %s" % self.get(field) if self.prev_field and flt(self.get(self.prev_field)) else self.get(field), color_o_colores),
-			"cantidad_proceso_retiro": "{0} {1} Proceso Retiro".format(self.get(field), color_o_colores) if not flt(self.get(field)) > 3.000 else "Full Color Proceso Retiro",
+			"cantidad_proceso_retiro": "{0} {1} Proceso Retiro".format(self.get(field), color_o_colores) if not flt(self.get(field)) > 3.000 else "Full Color Retiro",
 			"cantidad_pantone_retiro": "{0} {1} Pantone Retiro".format("+ %s" % self.get(field) if self.prev_field and flt(self.get(self.prev_field)) else self.get(field), color_o_colores)
 		}
 

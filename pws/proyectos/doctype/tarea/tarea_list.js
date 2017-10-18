@@ -34,7 +34,7 @@ frappe.listview_settings["Tarea"] = {
 
 		var indicators = {
 			"Open": "blue",
-			"Working": "blue",
+			"Working": "darkgrey",
 			"Pending Review": "orange",
 			"Overdue": "red",
 			"Closed": "green",
