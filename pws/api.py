@@ -161,9 +161,19 @@ def get_parent_code(item_group, array=[]):
 
     return get_parent_code(doc.parent_item_group, array)
 
+def sinv_autoname(doc, event):
+	from frappe.model.naming import make_autoname
+	doc.name = make_autoname("FACT-.#####")
+
+	if not doc.ncf:
+		doc.ncf = make_autoname(doc.naming_series)
+		
 def on_session_creation():
-	# if not frappe.session.user == "ezequiel@printworks.do":
-	# 	frappe.throw("Estamos trabajando en el sistema. Intente mas tarde!")
+	if not frappe.session.user == "ezequiel@printworks.do":
+		frappe.throw("Estamos trabajando en el sistema. Intente mas tarde!")
 		
 	msg = "User {0} has been logged in at {1}!".format(frappe.session.user, frappe.utils.now_datetime())
-	frappe.publish_realtime(event='msgprint', message=msg, user='yefritavarez@gmail.com') 
+	frappe.publish_realtime(event='msgprint', message=msg, user='yefritavarez@gmail.com')
+
+def showmessage(doc, event):
+	frappe.throw("Espere unos minutos antes de volver a intentar guardar esta factura")

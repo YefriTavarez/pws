@@ -381,13 +381,13 @@ frappe.ui.form.on('Ensamblador de Productos', {
 			}, 999)
 		}
 		
-		setTimeout(function() {
-			var fields = ["item_group_2", "item_group_3", "item_group_4"]
+		// setTimeout(function() {
+		// 	var fields = ["item_group_2", "item_group_3", "item_group_4"]
 
-			$.map(fields, function(field) {
-				frm.set_value(field, undefined)
-			})
-		}, 1500)
+		// 	$.map(fields, function(field) {
+		// 		frm.set_value(field, undefined)
+		// 	})
+		// }, 1500)
 	},
 })
 

@@ -13,3 +13,17 @@ def rename_doc(doctype, name, force=True):
 
 		return frappe.rename_doc(doc.doctype, 
 			doc.name, new_name, force=True)
+
+
+@frappe.whitelist()
+def get_task_status_list(task):
+	return frappe.db.sql("""SELECT
+			parent.status AS status
+		FROM
+			`tabTarea` AS parent 
+			JOIN
+				`tabTarea Dependiente de` AS child 
+				ON parent.name = child.parent 
+		WHERE
+			child.parent = %s
+			""", (task), as_dict=True)

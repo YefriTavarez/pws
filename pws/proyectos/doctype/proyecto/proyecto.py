@@ -206,16 +206,11 @@ def attach_file(doctype, docname, filedata):
 	fd_list = list(fd_json["files_data"])
 
 	for fd in fd_list:
-		# frappe.errprint("fd['file_name'] {}".format(fd['file_name']))
 		file_list = frappe.get_list("File", { "file_name": ["like", "{}%".format(fd["filename"])]})
-		# frappe.errprint("fd['filename'] {}".format(fd['filename']))
 
 		if file_list:
 			fd["filename"] = fd["filename"].replace(".pdf", "-{}.pdf".format(len(file_list) +1))
 		
-		# fd["dataurl"] = "{} {}".format(fd["dataurl"], fd["filename"])
-		# frappe.errprint("fd['dataurl'] {}".format(fd['dataurl']))
-
 		filedoc = save_file(fd["filename"], fd["dataurl"], 
 			doctype, docname, decode=True, is_private=True)
 

@@ -35,7 +35,7 @@ class MaterialdeImpresion(Document):
 		if self.get("identificador"):
 			full_name = "{} ({})".format(full_name, self.get("identificador"))
 
-		self.full_name = full_name.title()
+		self.full_name = full_name
 
 	def on_update(self):
 		from  pws.api import s_strip
@@ -76,7 +76,7 @@ class MaterialdeImpresion(Document):
 		return get_new_name(self)
 
 def get_new_name(material_doc):
-	name_sanitized = pws.api.s_sanitize(material_doc.get("nombre"))
+	name_sanitized = pws.api.s_sanitize(material_doc.get("nombre"), upper=False)
 	gutted = pws.api.gut(name_sanitized)
 	
 	new_name = "{0}".format("".join(gutted))

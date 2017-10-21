@@ -93,7 +93,17 @@ doc_events = {
 	},
 	"Item Group": {
 		"autoname": "pws.api.item_group_autoname",
-	}
+	},
+	"Purchase Invoice": {
+		"validate": "pws.pinv.validate",
+	},
+	"Purchase Order": {
+		"on_submit": "pws.po.on_submit"
+	},
+	"Sales Invoice": {
+		"autoname": "pws.api.sinv_autoname",
+		# "before_insert": "pws.api.showmessage",
+	},
 }
 
 # Scheduled Tasks

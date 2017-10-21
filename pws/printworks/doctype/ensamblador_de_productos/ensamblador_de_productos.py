@@ -63,15 +63,15 @@ class EnsambladordeProductos(Document):
 	def make_new_hash(self):
 		array = ["".join(
 			gut(self.get(key)))
-			for key in self.get_description_fields() 
+			for key in self.get_fields() 
 		if (self.get(key) if isinstance(self.get(key), basestring) else str(self.get(key)))] 
 
 		pre_hash = "".join(array).upper()
 
-		pre_hash_with_textures = "{0}{1}".format(pre_hash,
+		pre_hash_with_proteccions = "{0}{1}".format(pre_hash,
 			self.get_proteccion_names())
 
-		pre_hash_with_textures = "{0}{1}".format(pre_hash,
+		pre_hash_with_textures = "{0}{1}".format(pre_hash_with_proteccions,
 			self.get_textura_names())
 
 		pre_hash_with_utilities = "{0}{1}".format(pre_hash_with_textures,
@@ -91,31 +91,28 @@ class EnsambladordeProductos(Document):
 		return new_hash
 
 	def get_proteccion_names(self):
-		array = ""
+		protecciones = ""
 
-		for textura in sorted(self.opciones_de_proteccion):
-			array += "".join(
-				gut(textura.opciones_de_proteccion))
+		for proteccion in sorted([opt.opciones_de_proteccion for opt in self.opciones_de_proteccion]):
+			protecciones = "{0}{1}".format(protecciones, "".join(gut(proteccion)))
 
-		return "".join(array)
+		return "".join(protecciones)
 
 	def get_textura_names(self):
-		array = ""
+		texturas = ""
 
-		for proteccion in sorted(self.opciones_de_textura):
-			array += "".join(
-				gut(proteccion.opciones_de_textura))
+		for textura in sorted([opt.opciones_de_textura for opt in self.opciones_de_textura]):
+			texturas = "{0}{1}".format(texturas, "".join(gut(textura)))
 
-		return "".join(array)
+		return texturas
 
 	def get_utility_names(self):
-		array = ""
+		utilidades = ""
 
-		for utilidad in sorted(self.opciones_de_utilidad):
-			array += "".join(
-				gut(utilidad.opciones_de_utilidad))
+		for utilidad in sorted([opt.opciones_de_utilidad for opt in self.opciones_de_utilidad]):
+			utilidades = "{0}{1}".format(utilidades, "".join(gut(utilidad)))
 
-		return "".join(array)
+		return utilidades
 
 	def get_fields(self):
 		return [
@@ -135,15 +132,20 @@ class EnsambladordeProductos(Document):
 	def get_description_fields(self):
 		protecciones_list = []
 		utilidades_list = []
+		texturas_list = []
 
 		for proteccion in self.opciones_de_proteccion:
 			protecciones_list.append(" ".join(gut(proteccion.opciones_de_proteccion)))
+
+		for textura in self.opciones_de_textura:
+			texturas_list.append(" ".join(gut(textura.opciones_de_textura)))
 
 		for utilidad in self.opciones_de_utilidad:
 			utilidades_list.append(" ".join(gut(utilidad.opciones_de_utilidad)))
 
 		self.protecciones = ", ".join(protecciones_list)
 		self.utilidades = ", ".join(utilidades_list)
+		self.texturas = ", ".join(texturas_list)
 
 		return [
 			"perfilador_de_productos",
@@ -155,6 +157,7 @@ class EnsambladordeProductos(Document):
 			"cantidad_pantone_retiro",
 			"opciones_de_control",
 			"protecciones",
+			"texturas",
 			"opciones_de_corte",
 			"opciones_de_plegado",
 			"opciones_de_empalme",

@@ -207,17 +207,18 @@ frappe.ui.form.on('Proyecto', {
 					.addClass("octicon octicon-mail-reply")
 			}
 			
-			if (status == "Open" || status == "Pending Review" || status == "Working") {
+			if (["Open", "Pending Review", "Working"].includes(status)) {
 
-				var any_pending = false
 				if (row.dependant) {
+					var any_pending = false
 
 					var dependant_list = (row.depends_on || "").split(", ")
 
 					$.map(dependant_list, function(subject) {
 						if ( ! subject) { return ; }
 
-						task = frappe.get_doc("Tarea de Proyecto", { "title": subject })
+						// task = frappe.get_doc("Tarea de Proyecto", { "title": subject })
+						task = pws.utils.get_task(subject, frm.doc.tasks)
 
 						if ( ! task) { return ; }
 
@@ -226,10 +227,14 @@ frappe.ui.form.on('Proyecto', {
 						}
 					})
 
-					if ( ! any_pending && moment().format(fmt) > row.end_date) {
+					if ( moment().format(fmt) > row.end_date && ! any_pending) {
 						status = "Delayed"
+
+					} else if ( moment().format(fmt) < row.end_date && ! any_pending) {
+						// status = "Open"
+						colors["Open"] = "orange"
 					} else {
-						status = "Open"
+						// status = "Open"
 						colors["Open"] = "blue"
 					}
 				} else {
@@ -360,6 +365,7 @@ frappe.ui.form.on('Proyecto', {
 		frappe.provide("pws.ui.current_dialog")
 
 		var dialog = pws.ui.get_upload_dialog({
+			"name": frm.doc.name,
 			"customer": frm.doc.customer,
 			"project_name": frm.doc.project_name,
 			"item_name": frm.doc.item_name,
@@ -454,5 +460,20 @@ $.extend(pws.utils, {
 		closed_tasks = closed_tasks.length
 
 		return closed_tasks / tasks * 100.000
+	},
+	get_task: function(title, tasks) {
+		var tlowered = title.toLowerCase()
+		var to_return = null
+
+		$.map(tasks, function(task) {
+			console.log(task)
+			var title = task.title
+
+			if (title.toLowerCase() == tlowered) {
+				to_return = task
+			}
+		})
+
+		return to_return
 	}
 })
