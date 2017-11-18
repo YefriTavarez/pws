@@ -102,8 +102,8 @@
    "report_hide": 0, 
    "reqd": 1, 
    "search_index": 0, 
-   "set_only_once": 0, 
-   "unique": 0
+   "set_only_once": 1, 
+   "unique": 1
   }, 
   {
    "allow_bulk_edit": 0, 
@@ -179,7 +179,7 @@
  "issingle": 0, 
  "istable": 0, 
  "max_attachments": 0, 
- "modified": "2017-10-19 00:31:45.947545", 
+ "modified": "2017-10-24 20:58:40.330406", 
  "modified_by": "yefritavarez@gmail.com", 
  "module": "Proyectos", 
  "name": "Tipo de Adjunto", 

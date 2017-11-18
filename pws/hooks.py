@@ -102,8 +102,13 @@ doc_events = {
 	},
 	"Sales Invoice": {
 		"autoname": "pws.api.sinv_autoname",
-		# "before_insert": "pws.api.showmessage",
 	},
+	"Sales Order": {
+		"validate": "pws.sales_order.validate",
+	},
+	"File": {
+		"after_insert": "pws.file.after_insert"
+	}
 }
 
 # Scheduled Tasks

@@ -5,7 +5,7 @@ frappe.listview_settings["Tarea"] = {
 	onload: function(list, html, doc) {
 		frappe.route_options = {
 			"status": ["!=", "Closed"],
-			// "user": ["=", frappe.session.user]
+			"user": ["=", frappe.session.user]
 		}
 	},
 	post_render: function(list, html, doc) {
@@ -46,7 +46,7 @@ frappe.listview_settings["Tarea"] = {
 		}
 
 		var request = {
-		    "method": "pws.get_task_status_list"
+		    "method": "pws.has_any_open"
 		}
 		
 		request.args = {
@@ -54,40 +54,15 @@ frappe.listview_settings["Tarea"] = {
 		}
 		
 		request.callback = function(response) {
-			var task_list = response.message
-			var status = doc.status
+			var has_any_open = response.message['has_any_open']
 
-			if (task_list) {
-				var any_open = false
-
-				$.map(task_list, function(task) {
-					if (task.status != "Closed") {
-						any_open = true
-					}
-				})
-
-				if (["Open", "Pending Review", "Working"].includes(status)) {
-					if (doc.dependant) {
-						if ( moment().format(fmt) > doc.exp_end_date && ! any_open) {
-							status = "Delayed"
-						} else if ( moment().format(fmt) < doc.exp_end_date && ! any_open) {
-							indicators["Open"] = "orange"
-						} else {
-							indicators["Open"] = "blue"
-						}
-					} else {
-						if (moment().format(fmt) > doc.exp_end_date) {
-							status = "Delayed"
-						}
-					}
-				}
+			if (doc.dependant && ! flt(has_any_open)) {
+				indicators["Open"] = "orange"
 			}
 
-			var indicator = __("<span title='{0}' class='indicator {1}'></span>", 
-				[status, indicators[status]])
-
-			$row.find('a[data-filter^=subject]')
-				.prepend(indicator)
+			$row.find('a[data-filter^=subject]').prepend(
+				__("<span title='{0}' class='indicator {1}'></span>", [doc.status, 
+			indicators[doc.status]]))
 		}
 		
 		frappe.call(request)

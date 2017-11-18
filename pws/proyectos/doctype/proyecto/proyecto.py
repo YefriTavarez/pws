@@ -58,10 +58,13 @@ class Proyecto(Document):
 
 		self.db_update()
 
+		self.notify_project_manager()
+
 	def validate(self):
 		name_sanitized = self.collect_names()
 
 		self.title = name_sanitized
+		self.notify_project_manager_and_owner()
 
 	def update_percent_complete(self):
 
@@ -145,6 +148,44 @@ class Proyecto(Document):
 
 		self.set("project_name", [])
 
+	def notify_project_manager(self):
+		from frappe import _
+		__self__ = self.as_dict()
+		__self__.owner_name = frappe.get_value("User", self.owner, "full_name")
+		__self__.hostname = frappe.conf.get("hostname")
+
+		opts = frappe._dict({
+			"delayed": False,
+			"recipients": [self.project_manager],
+			"sender": frappe.get_value("Email Account", {"default_outgoing": "1"}, ["email_id"]),
+			"reference_doctype": self.doctype,
+			"reference_name": self.name,
+			"subject": _("Nuevo Proyecto"),
+			"message": _("""<i>%(owner_name)s</i> le ha asignado un nuevo Proyecto: <br>
+				<a href="%(hostname)s/Form/%(doctype)s/%(name)s">%(title)s</a>""" % __self__) 
+		})
+
+		frappe.sendmail(** opts)
+
+	def notify_project_manager_and_owner(self):
+		from frappe import _
+		__self__ = self.as_dict()
+		__self__.owner_name = frappe.get_value("User", self.modified_by, "full_name")
+		__self__.hostname = frappe.conf.get("hostname")
+
+		opts = frappe._dict({
+			"delayed": False,
+			"recipients": [self.project_manager],
+			"sender": frappe.get_value("Email Account", {"default_outgoing": "1"}, ["email_id"]),
+			"reference_doctype": self.doctype,
+			"reference_name": self.name,
+			"subject": _("Actualizacion de Proyecto"),
+			"message": _("""<i>%(owner_name)s</i> ha modificado el Proyecto: <br>
+				<a href="%(hostname)s/Form/%(doctype)s/%(name)s">%(title)s</a>""" % __self__) 
+		})
+
+		frappe.sendmail(** opts)
+
 	def sync_tasks(self):
 		task_names = []
 
@@ -202,14 +243,25 @@ class Proyecto(Document):
 def attach_file(doctype, docname, filedata):
 	if not filedata: return
 
+
 	fd_json = json.loads(filedata)
 	fd_list = list(fd_json["files_data"])
 
 	for fd in fd_list:
-		file_list = frappe.get_list("File", { "file_name": ["like", "{}%".format(fd["filename"])]})
+		attach_type = frappe.get_value("Tipo de Adjunto", fd["attach_type"], 
+			["allow_more_than_one", "max_attacthments"], as_dict=True)
+
+		file_list = frappe.get_list("File", { "file_name": ["like", "{}%".format(fd["filename"].split(".pdf")[0])]})
 
 		if file_list:
-			fd["filename"] = fd["filename"].replace(".pdf", "-{}.pdf".format(len(file_list) +1))
+			if (not attach_type.allow_more_than_one and len(file_list))\
+				or\
+			(attach_type.allow_more_than_one and attach_type.max_attacthments 
+				and flt(attach_type.max_attacthments) <= len(file_list)):
+				frappe.throw("No puede agregar mas adjuntos de este tipo")
+
+			fd["filename"] = fd["filename"].replace(".pdf", "-{}.pdf".format(len(file_list)))
+			fd["filename"] = s_sanitize(fd["filename"], upper=False)
 		
 		filedoc = save_file(fd["filename"], fd["dataurl"], 
 			doctype, docname, decode=True, is_private=True)

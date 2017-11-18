@@ -260,10 +260,69 @@ def ordered_item_group_query(doctype, txt, searchfield, start, page_len, filters
 			name""", (filters.get("parent_item_group"), "%{}%".format(txt) if txt else "%"),
 	as_dict=True)
 
-
-	# item_group_list = frappe.get_list("Item Group", {
-	# 	"item_group_name": ["like", "%{}%".format(txt) if txt else "%"],
-	# 	"parent_item_group": filters.get("parent_item_group"),
-	# }, ["item_group_code", "name"], order_by="creation")
-
 	return [[row.name] for row in item_group_list]
+
+def attach_type_query(doctype, txt, searchfield, start, page_len, filters):
+	txt = "%".join(txt.split())
+
+	attach_type_list = frappe.db.sql("""SELECT 
+			attach_type, abbr
+		FROM `tabTipo de Adjunto`
+		WHERE enabled = 1
+			AND (attach_type LIKE %s OR abbr LIKE %s)
+		ORDER BY attach_type
+		""", ("%{}%".format(txt) if txt else "%",
+	"%{}%".format(txt) if txt else "%"), as_dict=True)
+
+	return [[row.attach_type, row.abbr] for row in attach_type_list]
+
+def tarea_por_usuario_report_query(doctype, txt, *args, **kargs):
+	txt = "%".join(txt.split())
+
+	result = frappe.db.sql("""SELECT DISTINCT
+			parent
+		FROM
+			`tabHas Role` 
+		WHERE
+			parenttype = "USER" 
+			AND role = "Usuario de Proyectos" 
+			AND parent != "Administrator"
+			AND parent LIKE %s 
+		""", "%{}%".format(txt) if txt else "%", 
+	as_dict=True)
+
+	return [frappe.get_value("User", user.parent, ["name", "full_name"]) for user in result]
+
+def project_manager_query(doctype, txt, *args, **kargs):
+	txt = "%".join(txt.split())
+
+	result = frappe.db.sql("""SELECT DISTINCT
+			parent
+		FROM
+			`tabHas Role` 
+		WHERE
+			parenttype = "USER" 
+			AND role = "Supervisor de Proyectos" 
+			AND parent != "Administrator"
+			AND parent LIKE %s 
+		""", "%{}%".format(txt) if txt else "%", 
+	as_dict=True)
+
+	return [frappe.get_value("User", user.parent, ["name", "full_name"]) for user in result]
+
+def project_user_query(doctype, txt, *args, **kargs):
+	txt = "%".join(txt.split())
+
+	result = frappe.db.sql("""SELECT DISTINCT
+			parent
+		FROM
+			`tabHas Role` 
+		WHERE
+			parenttype = "USER" 
+			AND role = "Usuario de Proyectos" 
+			AND parent != "Administrator"
+			AND parent LIKE %s 
+		""", "%{}%".format(txt) if txt else "%", 
+	as_dict=True)
+
+	return [frappe.get_value("User", user.parent, ["name", "full_name"]) for user in result]

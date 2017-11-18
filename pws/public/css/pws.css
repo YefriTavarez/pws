@@ -2,10 +2,12 @@
 	display: none;
 }
 
+/*
 ::-webkit-scrollbar {
-	width: 0px;  /* remove scrollbar space */
-	background: transparent;  /* optional: just make scrollbar invisible */
+	width: 0px;  // remove scrollbar space
+	background: transparent;  // optional: just make scrollbar invisible
 }
+*/
 
 #dropdown-notification .progress-small[data-doctype=Company] {
 	display: none;

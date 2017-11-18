@@ -31,7 +31,11 @@ var refresh_notifications = function() {
                 }
             },
             freeze: false,
-            type: "GET" // to fix the invalid request bug
+            type: "GET", // to fix the invalid request bug
+            args: {
+                // to identify requests in the server
+                "user": frappe.boot.user_info[frappe.session.user].username
+            }
         });
     }
 }
@@ -64,6 +68,11 @@ pws.ui.get_upload_dialog = function (opts) {
                     })
 
                     $("#select_files").trigger("change")
+                },
+                "get_query": function() {
+                    return {
+                        "query": "pws.queries.attach_type_query"
+                    }
                 }
             },
             {
@@ -115,7 +124,7 @@ pws.ui.get_upload_dialog = function (opts) {
             }
 
             $.each(input.files, function(key, value) {
-                pws.file.setupReader(value, input, filename)
+                pws.file.setupReader(value, input, filename, attach_type)
             })
 
             window.file_reading = false
@@ -134,7 +143,7 @@ pws.ui.get_upload_dialog = function (opts) {
 };
 
 $.extend(pws.file, {
-    setupReader: function(file, input, filename) {
+    setupReader: function(file, input, filename, attach_type) {
         var name = file.name
         var reader = new FileReader()
 
@@ -142,7 +151,8 @@ $.extend(pws.file, {
             input.filedata.files_data.push({
                 "__file_attachment": 1,
                 "filename": filename || name,
-                "dataurl": reader.result
+                "dataurl": reader.result,
+                "attach_type": attach_type
             })
         }
         reader.readAsDataURL(file)
@@ -159,3 +169,13 @@ Number.prototype.formatInteger = function(c, d, t) {
         j = (j = i.length) > 3 ? j % 3 : 0;
     return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(0).slice(2) : "");
 };
+
+frappe.form.link_formatters['Proyecto'] = function(value, doc) {
+    if(doc.project_name && doc.project_name !== value) {
+        return value + ': ' + doc.project_name;
+    } else if(doc.customer && doc.customer !== value) {
+        return value + ': ' + doc.customer;
+    } else {
+        return value;
+    }
+}

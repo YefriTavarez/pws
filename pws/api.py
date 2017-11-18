@@ -14,6 +14,7 @@ def s_sanitize(string, upper=True):
 		(u"á", "a"), (u"Á", "A"),
 		(u"é", "e"), (u"É", "E"),
 		(u"í", "i"), (u"Í", "I"),
+		(u"ó́", "o"), (u"Ó", "O"),
 		(u"ó", "o"), (u"Ó", "O"),
 		(u"ú", "u"), (u"Ú", "U"),
 		(u"ü", "u"), (u"Ü", "U"),
@@ -27,6 +28,9 @@ def s_sanitize(string, upper=True):
 
 	if upper:
 		return s_sanitized.upper()
+
+	import re
+	s_sanitized = re.sub('[^a-zA-Z0-9\n\./,()\-]', ' ', s_sanitized)
 
 	return s_sanitized
 
@@ -169,8 +173,8 @@ def sinv_autoname(doc, event):
 		doc.ncf = make_autoname(doc.naming_series)
 		
 def on_session_creation():
-	if not frappe.session.user == "ezequiel@printworks.do":
-		frappe.throw("Estamos trabajando en el sistema. Intente mas tarde!")
+	# if not frappe.session.user == "ezequiel@printworks.do":
+	# frappe.throw("Estamos trabajando en el sistema. Intente mas tarde!")
 		
 	msg = "User {0} has been logged in at {1}!".format(frappe.session.user, frappe.utils.now_datetime())
 	frappe.publish_realtime(event='msgprint', message=msg, user='yefritavarez@gmail.com')

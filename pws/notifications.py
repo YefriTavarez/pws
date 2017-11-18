@@ -4,6 +4,15 @@ def get_notification_config():
 	return {
 		"for_doctype": {
 			"Tarea": "pws.notifications.get_things_to_do",
+			"Opportunity": {"docstatus": [">=", "2"]},
+			"Customer": {"docstatus": [">=", "2"]},
+			"Quotation": {"docstatus": ["=", "0"]},
+			"Sales Order": {"docstatus": ["=", "0"]},
+			"Sales Invoice": {"docstatus": ["=", "0"]},
+			"Delivery Note": {"docstatus": ["=", "0"]},
+			"Purchase Order": {"docstatus": ["=", "0"]},
+			"Purchase Invoice": {"docstatus": ["=", "0"]},
+			"Purchase Receipt": {"docstatus": ["=", "0"]},
 		},
 		"for_other": {
 			# todo

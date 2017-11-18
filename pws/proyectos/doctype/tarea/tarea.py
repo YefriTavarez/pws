@@ -53,6 +53,25 @@ class Tarea(Document):
 			project.set('status', 'Open')
 
 		project.db_update()
+		self.notify_project_manager_and_owner(project, msg)
+
+	def notify_project_manager_and_owner(self, project, msg):
+		from frappe import _
+		__project__ = project.as_dict()
+		__project__.owner_name = frappe.get_value("User", self.modified_by, "full_name")
+
+		opts = frappe._dict({
+			"delayed": False,
+			"recipients": [project.project_manager, project.owner],
+			"sender": frappe.get_value("Email Account", {"default_outgoing": "1"}, ["email_id"]),
+			"reference_doctype": project.doctype,
+			"reference_name": project.name,
+			"subject": _("Finalizacion de Tarea"),
+			"message": u"<b>{0}</b> cerró la tarea <i>{1}</i> del proyecto:<br><i>{2}</i>".format(__project__.owner_name,
+				self.subject, __project__.title or __project__.notes)
+		})
+
+		frappe.sendmail(** opts)
 
 	def update_dependee_tasks(self):
 		from pws.api import add_to_date

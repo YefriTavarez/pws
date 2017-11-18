@@ -101,6 +101,7 @@ frappe.ui.form.on('Proyecto', {
 		frm.set_query("sales_order", function() {
 			return {
 				"filters": {
+					"customer": frm.doc.customer,
 					"docstatus": "1"
 				}
 			}
@@ -466,7 +467,6 @@ $.extend(pws.utils, {
 		var to_return = null
 
 		$.map(tasks, function(task) {
-			console.log(task)
 			var title = task.title
 
 			if (title.toLowerCase() == tlowered) {

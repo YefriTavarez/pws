@@ -12,7 +12,7 @@ frappe.ui.form.on('Plantilla de Proyecto', {
 		frm.page.show_menu()
 	},
 	onload_post_render: function(frm) {
-		// pws.p_template.dependant_tasks.init(frm)
+		frm.trigger("set_queries")
 	},
 	validate: function(frm) {
 		frm.trigger("validate_dependant_tasks")
@@ -43,27 +43,25 @@ frappe.ui.form.on('Plantilla de Proyecto', {
 
 		frm.call("create_project", "args", callback)
 	},
-	fix_table_layout: function(frm) {
-		var main = frm.page.main
-
-		main.find("[data-fieldname=tasks]")
-			.find("[data-fieldname=status]").hide()
-
-		main.find("[data-fieldname=tasks]")
-			.find("[data-fieldname=start_date]").hide()
-
-		main.find("[data-fieldname=tasks]")
-			.find("[data-fieldname=end_date]").hide()
-
-		main.find("[data-fieldname=tasks]")
-			.find("[data-fieldname=title]").css({
-				"width": "50%"
-			})
-
-		main.find("[data-fieldname=tasks]")
-			.find("[data-fieldname=user]").css({
-				"width": "33.3333%"
-			})
+	set_queries: function(frm) {
+		var queries = ["set_proyect_manager_query", "set_proyect_user_query"]
+		$.map(queries, function(query) {
+			frm.trigger(query)
+		})
+	},
+	set_proyect_manager_query: function(frm) {
+		frm.set_query("project_manager", function() {
+			return {
+				"query": "pws.queries.project_manager_query"
+			}
+		})
+	},
+	set_proyect_user_query: function(frm) {
+		frm.set_query("user", "tasks", function() {
+			return {
+				"query": "pws.queries.project_user_query"
+			}
+		})
 	},
 	validate_dependant_tasks: function(frm) {
 		if (frm.doc["tasks"] && frm.doc["tasks"][0] && frm.doc["tasks"][0]["dependant"]) {

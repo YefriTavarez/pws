@@ -56,7 +56,7 @@ frappe.ui.form.on('Tarea', {
 	},
 	status: function(frm) {
 		if (frm.doc.status == "Open" && frm.doc.previous_status == "Overdue") {
-			if (frm.doc.exp_end_date > frappe.datetime.now_datetime()) {
+			if (frm.doc.exp_end_date < frappe.datetime.now_datetime()) {
 				frm.set_value("status", frm.doc.previous_status)
 				frappe.throw("¡No puede cambiar el estado de la Tarea a Abierto porque ya esta Atrasada!")
 			}

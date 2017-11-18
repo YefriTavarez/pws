@@ -18,12 +18,26 @@ def rename_doc(doctype, name, force=True):
 @frappe.whitelist()
 def get_task_status_list(task):
 	return frappe.db.sql("""SELECT
-			parent.status AS status
+			task.status AS status
 		FROM
 			`tabTarea` AS parent 
 			JOIN
 				`tabTarea Dependiente de` AS child 
 				ON parent.name = child.parent 
+			JOIN
+				`tabTarea` AS task 
+				ON child.task = task.name 
 		WHERE
-			child.parent = %s
+			parent.name = %s
 			""", (task), as_dict=True)
+
+@frappe.whitelist()
+def has_any_open(task):
+	if not frappe.get_value("Tarea", task, "dependant"):
+		return frappe._dict({ "has_any_open": 0 })
+
+	for task in get_task_status_list(task):
+		if not task.status == "Closed":
+			return frappe._dict({ "has_any_open": 1 })
+	else:
+		return frappe._dict({ "has_any_open": 0 })
