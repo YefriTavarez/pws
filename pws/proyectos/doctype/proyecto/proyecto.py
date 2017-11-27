@@ -89,44 +89,57 @@ class Proyecto(Document):
 			s_sanitize(self.get(field), upper=False) for field in fields])
 
 	def update_costs(self):
-		self.total_purchase_cost = frappe.db.sql("""SELECT 
-				SUM(child.amount)
-			FROM `tabPurchase Invoice Item` as child 
-			JOIN `tabPurchase Invoice` as parent
-			ON parent.name = child.parent
-			WHERE parent.docstatus = 1
-			AND child.proyecto = %s
-		""", (self.name))[0][0]
+		self.get_total_purchase_invoice_cost()
+		self.get_total_purchase_order_cost()
+		self.get_total_sales_order_cost()
+		self.get_total_sales_invoice_cost()
 
-		self.total_purchase_order_cost = frappe.db.sql("""SELECT
-				SUM(child.amount) 
-			FROM
-				`tabPurchase Order Item` AS child 
-				JOIN
-					`tabPurchase Order` AS parent 
-					ON child.parent = parent.name 
-			WHERE
-				parent.docstatus = 1 
-				AND child.proyecto = %s """, (self.name))[0][0]
+	def get_total_sales_invoice_cost(self):
+		result = frappe.db.sql("""SELECT SUM(child.amount)
+				FROM `tabProyecto` AS proyecto
+			JOIN `tabSales Order` AS so
+				ON proyecto.sales_order = so.name
+			JOIN `tabSales Invoice Item` AS child
+				ON child.sales_order = so.name
+			WHERE proyecto = %(name)s
+			AND child.docstatus = 1
+			GROUP BY child.name""", self.as_dict(), as_list=True)
 
-		self.total_sales_cost = frappe.db.sql("""SELECT
-				SUM(child.amount) 
-			FROM
-				`tabSales Order Item` AS child 
-				JOIN
-					`tabSales Order` AS parent 
-					ON child.parent = parent.name 
-			WHERE
-				parent.docstatus = 1 
-				AND child.proyecto = %s""", (self.name))[0][0]
+		if len(result):
+			self.total_sales_invoice_cost = result[0][0]
+		else:
+			self.total_sales_invoice_cost = frappe.get_value("Sales Invoice Item", {
+				"proyecto": self.name,
+				"docstatus": 1
+			}, ["SUM(amount)"])
+			
 
-		# self.total_sales_invoice_cost = frappe.db.sql("""SELECT
-		# 		SUM(total) 
-		# 	FROM
-		# 		`tabSales Invoice` 
-		# 	WHERE
-		# 		docstatus = 1 
-		# 		AND proyecto = %s""", (self.name))[0][0]
+
+	def get_total_sales_order_cost(self):
+		self.total_sales_cost = frappe.get_value("Sales Order Item", {
+			"proyecto": self.name,
+			"docstatus": 1
+		}, ["SUM(amount)"]) or\
+		frappe.get_value("Sales Order", {
+			"project": self.name,
+			"docstatus": 1
+		}, ["SUM(total)"]) or\
+		frappe.get_value("Sales Order", {
+			"name": self.sales_order,
+			"docstatus": 1
+		}, ["SUM(total)"])
+
+	def get_total_purchase_invoice_cost(self):
+		self.total_purchase_cost = frappe.get_value("Purchase Invoice Item", {
+			"proyecto": self.name,
+			"docstatus": 1
+		}, ["SUM(amount)"])
+
+	def get_total_purchase_order_cost(self):
+		self.total_purchase_order_cost = frappe.get_value("Purchase Order Item", {
+			"proyecto": self.name,
+			"docstatus": 1
+		}, ["SUM(amount)"])
 
 	def create_project(self):
 		self.set("tasks", [])

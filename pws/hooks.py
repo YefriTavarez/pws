@@ -153,3 +153,5 @@ website_context = {
 
 default_mail_footer = """
 """
+
+boot_session = "pws.boot.get_task_list"

@@ -1,0 +1,30 @@
+{
+ "add_total_row": 0, 
+ "apply_user_permissions": 1, 
+ "creation": "2017-11-25 20:08:26.503020", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "letter_head": "Principal", 
+ "modified": "2017-11-25 20:08:26.503020", 
+ "modified_by": "yefritavarez@gmail.com", 
+ "module": "Proyectos", 
+ "name": "Promedio por Tareas", 
+ "owner": "yefritavarez@gmail.com", 
+ "ref_doctype": "Tarea", 
+ "report_name": "Promedio por Tareas", 
+ "report_type": "Script Report", 
+ "roles": [
+  {
+   "role": "Usuario de Proyectos"
+  }, 
+  {
+   "role": "Supervisor de Proyectos"
+  }, 
+  {
+   "role": "Creadores de Proyectos"
+  }
+ ]
+}

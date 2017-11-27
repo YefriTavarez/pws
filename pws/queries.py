@@ -326,3 +326,10 @@ def project_user_query(doctype, txt, *args, **kargs):
 	as_dict=True)
 
 	return [frappe.get_value("User", user.parent, ["name", "full_name"]) for user in result]
+
+def doctype_query(doctype, txt, *args, **kargs):
+	item_list = frappe.get_all("DocType", {
+		"name": ["in", "Customer, Supplier, Employee, Other"],
+	}, ["distinct name"], order_by="name")
+
+	return [[row.name] for row in item_list]

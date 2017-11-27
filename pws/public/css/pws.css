@@ -20,3 +20,7 @@
 .form-print-wrapper .checkbox.small {
 	display: none;
 }
+
+body[data-route="List/Proyecto/List"] .list-item__content--flex-2 {
+	flex: 650px;
+}

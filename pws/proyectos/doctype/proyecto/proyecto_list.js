@@ -1,23 +1,18 @@
 frappe.listview_settings["Proyecto"] = {
 	hide_name_column: true,
 	add_fields: ["status", "expected_end_date"],
-	cols_width: {"title": 10},
+	cols_width: {"title": "1000px"},
 	onload: function(listview) {
 		frappe.route_options = {
 			"status": "Open"
 		}
 	},
 	refresh: function(list, html, doc) {
-		setTimeout(function() {
-
-			$(".list-item__content--flex-2").css({
-				"flex": 650
-			})
-		}, 999)
+		list.page.fields_dict.name
+			.$input.prop("placeholder", __("Project ID"));
 	},
 	post_render: function(list, html, doc) {
 		list.page.sidebar.hide()
-		list.page.fields_dict.name.$wrapper.hide()
 
 		var parent = list.page.body.parent()
 
@@ -55,7 +50,7 @@ frappe.listview_settings["Proyecto"] = {
 
 		// html.find("a[data-name^='PRO']").append(first_indicator)
 
-		// if it's due
+		// if it's due, let's change the status
 		if (moment() > moment(doc.expected_end_date, "YYYY-MM-DD HH:mm:ss")) {
 			indicators["Open"] = "red"
 			title = "Atrasado"

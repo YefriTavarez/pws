@@ -115,7 +115,7 @@ pws.ui.get_upload_dialog = function (opts) {
             if (attach_type) {
                 // filename = __("{0}-{1}, {2}({3}) Cant. {4}.pdf", [
                 filename = __("{0}-{1}.pdf", [
-                    pws.file.abbr,
+                    pws.file.abbr || "DOC",
                     opts.name
                     // opts.item_name.replace("/", "-"),
                     // opts.project_name,
