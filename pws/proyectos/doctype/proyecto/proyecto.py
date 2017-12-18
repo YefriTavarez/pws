@@ -175,7 +175,7 @@ class Proyecto(Document):
 			"reference_name": self.name,
 			"subject": _("Nuevo Proyecto"),
 			"message": _("""<i>%(owner_name)s</i> le ha asignado un nuevo Proyecto: <br>
-				<a href="%(hostname)s/Form/%(doctype)s/%(name)s">%(title)s</a>""" % __self__) 
+				<a href="%(hostname)s/desk#Form/%(doctype)s/%(name)s">%(title)s</a>""" % __self__) 
 		})
 
 		frappe.sendmail(** opts)
@@ -194,7 +194,7 @@ class Proyecto(Document):
 			"reference_name": self.name,
 			"subject": _("Actualizacion de Proyecto"),
 			"message": _("""<i>%(owner_name)s</i> ha modificado el Proyecto: <br>
-				<a href="%(hostname)s/Form/%(doctype)s/%(name)s">%(title)s</a>""" % __self__) 
+				<a href="%(hostname)s/desk#Form/%(doctype)s/%(name)s">%(title)s</a>""" % __self__) 
 		})
 
 		frappe.sendmail(** opts)

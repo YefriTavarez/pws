@@ -4,7 +4,7 @@ frappe.provide("pws.file")
 
 $(document).ready(function(event) {
     // hide the help menu
-    $(".dropdown.dropdown-help.dropdown-mobile").hide()
+    $(".dropdown.dropdown-help.dropdown-mobile").hide();
 
     $.extend(frappe.app, {
         refresh_notifications: refresh_notifications
@@ -169,6 +169,15 @@ Number.prototype.formatInteger = function(c, d, t) {
         j = (j = i.length) > 3 ? j % 3 : 0;
     return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(0).slice(2) : "");
 };
+
+// String.prototype.toTitleCase = function() {
+//     return (this || "").toLowerCase()
+//         .split(" ")
+//         .map((word) => {
+//             return word[0].toUpperCase() + word.substr(1);
+//         })
+//     .join(" ");
+// }
 
 frappe.form.link_formatters['Proyecto'] = function(value, doc) {
     if(doc.project_name && doc.project_name !== value) {

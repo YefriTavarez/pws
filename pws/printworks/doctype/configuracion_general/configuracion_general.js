@@ -2,41 +2,33 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Configuracion General', {
-	refresh: function(frm) {
-		var events = ["set_queries"]
-
-		$.map(events, function(event) {
-			frm.trigger(event)
-		})
+	"refresh": (frm) => {
+		$.map(["set_queries"], (event) => frm.trigger(event));
 	},
-	set_queries: function(frm) {
-		var queries = ["set_item_group_query", 
-			"materials_item_group_query"]
-
-		$.map(queries, function(query) {
-			frm.trigger(query)
-		})
+	"set_queries": (frm) => {
+		$.map(["set_item_group_query", "materials_item_group_query", "set_chores_approver_query"], 
+			(query) => frm.trigger(query));
 	},
-	set_item_group_query: function(frm) {
-		var filters = {
-			"is_group": "1"
-		}
-
-		frm.set_query("item_group", function() {
+	"set_item_group_query": (frm) => {
+		frm.set_query("item_group", () => {
 			return {
-				"filters": filters
-			}
-		})
+				"filters": { "is_group": 1 }
+			};
+		});
 	},
-	materials_item_group_query: function(frm) {
-		var filters = {
-			"parent_item_group": "All Item Groups"
-		}
-
-		frm.set_query("materials_item_group", function() {
+	"materials_item_group_query": (frm) => {
+		frm.set_query("materials_item_group", () => {
 			return {
-				"filters": filters
-			}
-		})	
+				"filters": { "parent_item_group": "All Item Groups" }
+			};
+		});	
+	},
+	"set_chores_approver_query": (frm) => {
+		frm.set_query("chores_approver", () => {
+			return {
+				"query": "pws.queries.user_query",
+				"filters": { "role": "Logistica" }
+			};
+		});	
 	}
-})
+});

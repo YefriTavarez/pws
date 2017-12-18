@@ -7,6 +7,8 @@ import pws.utils
 
 from frappe.utils import flt
 
+from pws.solicitudes.doctype.solicitud_de_pago import solicitud_de_pago
+
 def s_sanitize(string, upper=True):
 	"""Remove the most common special caracters"""
 
@@ -90,49 +92,6 @@ def add_to_date(date, years=0, months=0, days=0, hours=0, minutes=0, as_string=F
 	else:
 		return date
 
-def item_autoname(doc, event):
-	from frappe.model.naming import make_autoname
-
-	item_validate(doc, event)
-
-	if doc.item_group == "All Item Groups":
-		doc.name = make_autoname("00000000.####")
-
-		return False
-
-	parent_codes = get_parent_code(doc.item_group, [])
-	parents_code = "".join(parent_codes)
-
-	array = [c for c in parents_code]
-
-	missing_length = 8 - len(array)
-
-	for e in range(missing_length):
-		array.append("0")
-
-	array += ".####"
-	serie = "".join(array)
-
-	doc.name = make_autoname(serie)
-
-def item_validate(doc, event):
-	doc.item_group = doc.item_group_4 or doc.item_group_3\
-		or doc.item_group_2 or doc.item_group_1
-
-def item_ontrash(doc, event):
-	serie = doc.name[:8]
-	identifier = doc.name[-4:]
-
-	current = frappe.db.sql("""SELECT current 
-		FROM tabSeries 
-		WHERE name = '{}' """.format(serie), as_list=True)[0][0]
-
-	if flt(current) == flt(identifier):
-		frappe.db.sql("""UPDATE tabSeries 
-			SET current = {0}
-			WHERE name = '{1}' """.format(flt(identifier) -1 if flt(identifier) > 0 else 0, serie),
-		as_list=True)
-
 def item_group_autoname(doc, event):
 
 	if not doc.item_group_name == "All Item Groups":
@@ -146,9 +105,14 @@ def item_group_autoname(doc, event):
 		doc.item_group_name.encode("utf-8").strip())
 
 def get_lastest_code(parent):
-	r = frappe.db.sql("""SELECT IFNULL(MAX(item_group_code), 0)
-		FROM `tabItem Group`
-		WHERE parent_item_group = '%s'""" % parent, as_list=True)
+	r = frappe.db.sql("""
+		SELECT 
+			IFNULL(MAX(item_group_code), 0)
+		FROM 
+			`tabItem Group`
+		WHERE 
+			parent_item_group = '%s'
+	""" % parent, as_list=True)
 
 	return r and r[0][0]
 
@@ -165,13 +129,6 @@ def get_parent_code(item_group, array=[]):
 
     return get_parent_code(doc.parent_item_group, array)
 
-def sinv_autoname(doc, event):
-	from frappe.model.naming import make_autoname
-	doc.name = make_autoname("FACT-.#####")
-
-	if not doc.ncf:
-		doc.ncf = make_autoname(doc.naming_series)
-		
 def on_session_creation():
 	# if not frappe.session.user == "ezequiel@printworks.do":
 	# frappe.throw("Estamos trabajando en el sistema. Intente mas tarde!")
@@ -181,3 +138,7 @@ def on_session_creation():
 
 def showmessage(doc, event):
 	frappe.throw("Espere unos minutos antes de volver a intentar guardar esta factura")
+
+@frappe.whitelist()
+def make_payment_entry(doctype, name):
+	return solicitud_de_pago.make_payment_entry(doctype, name)

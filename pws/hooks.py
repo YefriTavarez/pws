@@ -13,7 +13,6 @@ app_license = "General Public License, v3"
 
 # fixtures
 fixtures = [
-	"Custom Script", 
 	"Custom Field"
 ]
 
@@ -87,9 +86,9 @@ notification_config = "pws.notifications.get_notification_config"
 
 doc_events = {
 	"Item": {
-		"autoname": "pws.api.item_autoname",
-		"validate": "pws.api.item_validate",
-		"on_trash": "pws.api.item_ontrash",
+		"autoname": "pws.item.item_autoname",
+		"validate": "pws.item.item_validate",
+		"on_trash": "pws.item.item_ontrash",
 	},
 	"Item Group": {
 		"autoname": "pws.api.item_group_autoname",
@@ -101,13 +100,17 @@ doc_events = {
 		"on_submit": "pws.po.on_submit"
 	},
 	"Sales Invoice": {
-		"autoname": "pws.api.sinv_autoname",
+		"autoname": "pws.sinv.sinv_autoname",
 	},
 	"Sales Order": {
 		"validate": "pws.sales_order.validate",
 	},
 	"File": {
 		"after_insert": "pws.file.after_insert"
+	},
+	"Payment Entry": {
+		"on_submit": "pws.payment_entry.on_submit",
+		"on_cancel": "pws.payment_entry.on_cancel",
 	}
 }
 
@@ -154,4 +157,7 @@ website_context = {
 default_mail_footer = """
 """
 
-boot_session = "pws.boot.get_task_list"
+boot_session = [
+	"pws.boot.add_user_info",
+	"pws.boot.get_task_list",
+]

@@ -9,14 +9,14 @@
  "is_standard": "Yes", 
  "json": "{\"add_total_row\": 0, \"sort_by\": \"Tarea.modified\", \"add_totals_row\": 0, \"sort_order\": \"desc\", \"sort_by_next\": null, \"filters\": [[\"Tarea\", \"status\", \"!=\", \"Closed\"], [\"Tarea\", \"user\", \"!=\", \"Administrator\"], [\"Tarea\", \"user\", \"=\", \"dfeliz@printworks.do\"]], \"sort_order_next\": \"desc\", \"columns\": [[\"name\", \"Tarea\"], [\"project_name\", \"Tarea\"], [\"subject\", \"Tarea\"], [\"project\", \"Tarea\"], [\"status\", \"Tarea\"], [\"exp_end_date\", \"Tarea\"]]}", 
  "letter_head": "Principal", 
- "modified": "2017-10-26 01:33:05.181844", 
+ "modified": "2017-12-01 10:30:26.288003", 
  "modified_by": "Administrator", 
  "module": "Proyectos", 
  "name": "Tareas por usuario", 
  "owner": "yefritavarez@gmail.com", 
  "ref_doctype": "Tarea", 
  "report_name": "Tareas por usuario", 
- "report_type": "Report Builder", 
+ "report_type": "Script Report", 
  "roles": [
   {
    "role": "Supervisor de Proyectos"

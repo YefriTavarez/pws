@@ -276,7 +276,7 @@ def attach_type_query(doctype, txt, searchfield, start, page_len, filters):
 
 	return [[row.attach_type, row.abbr] for row in attach_type_list]
 
-def tarea_por_usuario_report_query(doctype, txt, *args, **kargs):
+def tarea_por_usuario_report_query(doctype, txt, searchfield, start, page_len, filters):
 	txt = "%".join(txt.split())
 
 	result = frappe.db.sql("""SELECT DISTINCT
@@ -293,7 +293,7 @@ def tarea_por_usuario_report_query(doctype, txt, *args, **kargs):
 
 	return [frappe.get_value("User", user.parent, ["name", "full_name"]) for user in result]
 
-def project_manager_query(doctype, txt, *args, **kargs):
+def project_manager_query(doctype, txt, searchfield, start, page_len, filters):
 	txt = "%".join(txt.split())
 
 	result = frappe.db.sql("""SELECT DISTINCT
@@ -310,7 +310,7 @@ def project_manager_query(doctype, txt, *args, **kargs):
 
 	return [frappe.get_value("User", user.parent, ["name", "full_name"]) for user in result]
 
-def project_user_query(doctype, txt, *args, **kargs):
+def project_user_query(doctype, txt, searchfield, start, page_len, filters):
 	txt = "%".join(txt.split())
 
 	result = frappe.db.sql("""SELECT DISTINCT
@@ -318,7 +318,7 @@ def project_user_query(doctype, txt, *args, **kargs):
 		FROM
 			`tabHas Role` 
 		WHERE
-			parenttype = "USER" 
+			parenttype = "User" 
 			AND role = "Usuario de Proyectos" 
 			AND parent != "Administrator"
 			AND parent LIKE %s 
@@ -327,7 +327,26 @@ def project_user_query(doctype, txt, *args, **kargs):
 
 	return [frappe.get_value("User", user.parent, ["name", "full_name"]) for user in result]
 
-def doctype_query(doctype, txt, *args, **kargs):
+def user_query(doctype, txt, searchfield, start, page_len, filters):
+	filters.update({
+		"txt": "%{}%".format(txt) if txt else "%"
+	})
+
+	result = frappe.db.sql("""SELECT DISTINCT
+			parent
+		FROM
+			`tabHas Role` 
+		WHERE
+			parenttype = "User" 
+			AND role = %(role)s 
+			AND parent != "Administrator"
+			AND parent LIKE %(txt)s 
+		""", filters, 
+	as_dict=True)
+
+	return [frappe.get_value("User", user.parent, ["name", "full_name"]) for user in result]
+
+def doctype_query(doctype, txt, searchfield, start, page_len, filters):
 	item_list = frappe.get_all("DocType", {
 		"name": ["in", "Customer, Supplier, Employee, Other"],
 	}, ["distinct name"], order_by="name")

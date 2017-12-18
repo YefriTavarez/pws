@@ -14,7 +14,9 @@ from frappe.contacts.doctype.address.address import get_default_address
 
 class SolicituddeDiligencia(Document):
 	def after_insert(self):
-		self.user = self.owner
+		self.requested_by = frappe.get_value("User", self.owner, "full_name")
+
+		self.notify_chores_approver()
 		self.db_update()
 
 	def validate(self):
@@ -36,6 +38,8 @@ class SolicituddeDiligencia(Document):
 			self.set_docstatus()
 			self.db_update()
 
+		self.update_chores_approver_name()
+
 	def submit(self):
 		if self.status == "PENDIENTE":
 			frappe.throw("Debe aprobar o denegar esta Solicitud de Diligencia antes de validarla.")
@@ -53,3 +57,36 @@ class SolicituddeDiligencia(Document):
 			self.display_address = get_address_display(self.party_address)
 		else:
 			self.display_address = None
+
+	def notify_chores_approver(self):
+		notify_chores_approver(self)
+
+	def update_chores_approver_name(self):
+		if not self.status == "PENDIENTE":
+			self.user = self.modified_by
+			self.approver_name = frappe.get_value("User", self.user, "full_name")
+		
+
+def notify_chores_approver(solicitud_de_diligencia):
+	doc = solicitud_de_diligencia.as_dict()
+	doc.owner_name = frappe.get_value("User", solicitud_de_diligencia.owner, "full_name")
+	doc.hostname = frappe.conf.get("hostname")
+
+	opts = frappe._dict({
+		"delayed": False,
+		"recipients": [frappe.db.get_single_value("Configuracion General", "chores_approver")],
+		"sender": frappe.get_value("Email Account", {"default_outgoing": "1"}, ["email_id"]),
+		"reference_doctype": doc.doctype,
+		"reference_name": doc.name,
+		"subject": "Nueva Solicitud de Diligencia | {}".format(doc.motivation),
+		"message": """<i>%(owner_name)s</i> ha creado la Solicitud de Diligencia No: 
+			<strong>
+				<a href="%(hostname)s/Form/%(doctype)s/%(name)s">%(name)s</a>
+			</strong>
+
+			<br>
+			<p>%(description)s</p>
+		""" % doc
+	})
+
+	frappe.sendmail(** opts)
