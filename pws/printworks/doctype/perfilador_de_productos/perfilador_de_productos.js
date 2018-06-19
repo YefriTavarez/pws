@@ -22,9 +22,9 @@ frappe.ui.form.on('Perfilador de Productos', {
 		frm.trigger("validate_duplicates")
 	},
 	add_buttons: function(frm) {
-		frm.add_custom_button("Reset Form", function(event) {
-			frm.trigger("reset_form")
-		})
+		frm.add_custom_button("Todas las posibilidades", function(event) {
+			frm.trigger("reset_form");
+		}, "Agregar");
 	},
 	reset_form: function(frm) {
 		frm.trigger("clear_and_fill_tables")

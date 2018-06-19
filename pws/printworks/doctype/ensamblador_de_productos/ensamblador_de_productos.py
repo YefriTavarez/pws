@@ -43,6 +43,8 @@ class EnsambladordeProductos(Document):
 
 		self.update_item()
 
+		self.validate_table_lengths()
+
 	def update_item(self):
 		# fields that are integers but are rendered
 		# as dropdown lists and hence treated as string 
@@ -89,6 +91,16 @@ class EnsambladordeProductos(Document):
 				especificaciones.""".format(exists))
 
 		return new_hash
+
+	def validate_table_lengths(self):
+		if len(self.opciones_de_proteccion) > 2:
+			frappe.throw("No puede tener mas de dos Opciones de Proteccion en este producto")
+
+		if len(self.opciones_de_utilidad) > 3:
+			frappe.throw("No puede tener mas de tres Opciones de Utilidad en este producto")
+
+		if len(self.opciones_de_textura) > 2:
+			frappe.throw("No puede tener mas de dos Opciones de Textura en este producto")
 
 	def get_proteccion_names(self):
 		protecciones = ""

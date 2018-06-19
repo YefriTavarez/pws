@@ -110,7 +110,7 @@ def notify_payment_request_approvers(self):
 		"subject": "Nueva Solicitud de Pago | {}".format(doc.motivation),
 		"message": """<i>%(owner_name)s</i> ha creado la Solicitud de Pago No: 
 			<strong>
-				<a href="%(hostname)s/Form/%(doctype)s/%(name)s">%(name)s</a>
+				<a href="%(hostname)s/desk#Form/%(doctype)s/%(name)s">%(name)s</a>
 			</strong>
 
 			<br>
@@ -135,7 +135,7 @@ def notify_payment_request_user(self):
 		"subject": "Nueva Solicitud de Pago | {}".format(doc.motivation),
 		"message": """<i>%(approver)s</i> ha %(status)s su Solicitud de Pago No: 
 			<strong>
-				<a href="%(hostname)s/Form/%(doctype)s/%(name)s">%(name)s</a>
+				<a href="%(hostname)s/desk#Form/%(doctype)s/%(name)s">%(name)s</a>
 			</strong>
 
 			<br>
@@ -179,15 +179,20 @@ def make_payment_entry(dt, dn):
 	payment_entry.payment_request = doc.name
 	# payment_entry.letter_head = doc.get("letter_head")
 
-	payment_entry.append("references", {
-		"reference_doctype": dt,
-		"reference_name": dn,
-		"bill_no": doc.get("reference_name"),
-		"due_date": doc.get("reference_date"),
-		"total_amount": doc.approved_amount,
-		"outstanding_amount": 0.000,
-		"allocated_amount": doc.approved_amount
-	})
+
+	if doc.transaction_type and doc.transaction_name:
+		if doc.transaction_type == "Purchase Order":
+			trans = frappe.get_doc(doc.transaction_type, doc.transaction_name)
+
+			payment_entry.append("references", {
+				"reference_doctype": doc.transaction_type,
+				"reference_name": doc.transaction_name,
+				"bill_no": doc.get("reference_name"),
+				"due_date": doc.get("reference_date"),
+				"total_amount": trans.total,
+				"outstanding_amount": 0.000,
+				"allocated_amount": trans.total
+			})
 
 	payment_entry.setup_party_account_field()
 	# payment_entry.set_missing_values()
@@ -196,3 +201,42 @@ def make_payment_entry(dt, dn):
 	payment_entry.set_amounts()
 	return payment_entry.as_dict()
 
+@frappe.whitelist()
+def make_journal_entry(dt, dn):
+	sol = frappe.get_doc(dt, dn)
+
+	default_company = frappe.defaults.get_global_default("company")
+	company_currency = frappe.get_value("Company", default_company, "default_currency")
+
+	journal = frappe.new_doc("Journal Entry")
+	journal.solicitud_de_pago = sol.name
+
+	journal.update({
+		'voucher_type': 'Journal Entry',
+		'cheque_date': sol.reference_date,
+		'cheque_no': sol.reference_name,
+		'due_date': sol.required_before,
+		'is_opening': 'No',
+		'multi_currency': 0 if sol.currency == "DOP" else 1,
+		'pay_to_recd_from': sol.party,
+		'posting_date': frappe.utils.nowdate(),
+		'remark': sol.party or sol.motivation,
+		'title': sol.party or sol.motivation,
+		'user_remark': sol.motivation,
+	})
+
+	journal.append("accounts", {
+		'account': get_party_account(sol.party_type, sol.party or sol.other_party, default_company),
+		'debit': sol.approved_amount,
+		'debit_in_account_currency': sol.approved_amount,
+		'party': sol.party,
+		'party_type': sol.party_type,
+	})
+
+	journal.append("accounts", {
+		'account': sol.disbursement_account,
+		'credit': sol.approved_amount,
+		'credit_in_account_currency': sol.approved_amount,
+	})
+
+	return journal

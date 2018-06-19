@@ -1,5 +1,5 @@
 frappe.listview_settings["Solicitud de Pago"] = {
-	"hide_name_column": true,
+	// "hide_name_column": true,
 	"add_fields": ["outstanding_amount", "status", "docstatus"],
 	"get_indicator": (doc) => {
 		let status = doc.status;
@@ -14,6 +14,10 @@ frappe.listview_settings["Solicitud de Pago"] = {
 			"PENDIENTE": "PENDIENTE|orange|status,=,PENDIENTE",
 			"DENEGADO": "DENEGADO|red|status,=,DENEGADO"
 		};
+
+		if (status == "APROBADO") {
+			return ["APROBADO", "blue", "status,=,APROBADO|docstatus,=,1|outstanding_amount,>,0"];
+		}
 
 		return states[status].split("|");
 	}

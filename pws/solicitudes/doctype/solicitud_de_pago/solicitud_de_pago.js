@@ -51,6 +51,21 @@ frappe.ui.form.on('Solicitud de Pago', {
 			doc = frappe.model.sync(response.message)[0];
 			frappe.set_route("Form", doc.doctype, doc.name);
 		}, (error) => frappe.msgprint("¡Hubo un problema mientras se hacia el pago!"))
+	},	
+	"make_journal_entry": (frm) => {
+		let opts = {
+			"method": "pws.api.make_journal_entry"
+		};
+
+		opts.args = {
+			"doctype": frm.doctype,
+			"name": frm.docname
+		};
+
+		frappe.call(opts).then((response) => {
+			doc = frappe.model.sync(response.message)[0];
+			frappe.set_route("Form", doc.doctype, doc.name);
+		}, (error) => frappe.msgprint("¡Hubo un problema mientras se hacia el pago!"))
 	},
 	"status": (frm) => {
 		frappe.run_serially([
@@ -69,8 +84,10 @@ frappe.ui.form.on('Solicitud de Pago', {
 		if (frm.doc.docstatus == 1 && frm.doc.status == "APROBADO") {
 			if (frm.doc.outstanding_amount && frm.doc.party_type != "Other") {
 				frm.add_custom_button("Pago", () => frm.trigger("make_payment_entry"), "Hacer");
-				frm.page.set_inner_btn_group_as_primary("Hacer");
 			}
+			
+			frm.add_custom_button("Asiento", () => frm.trigger("make_journal_entry"), "Hacer");
+			frm.page.set_inner_btn_group_as_primary("Hacer");
 		}
 	},
 	"set_queries": (frm) => {

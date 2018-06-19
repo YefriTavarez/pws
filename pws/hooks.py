@@ -31,7 +31,12 @@ app_include_js = "/assets/pws/js/pws.js"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+	"Purchase Order" : "public/js/purchase_order.js",
+	"Payment Entry" : "public/js/payment_entry.js",
+	"Translation" : "public/js/translation.js"
+}
+
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -111,6 +116,16 @@ doc_events = {
 	"Payment Entry": {
 		"on_submit": "pws.payment_entry.on_submit",
 		"on_cancel": "pws.payment_entry.on_cancel",
+	},
+	"Workstation": {
+		"autoname": "pws.workstation.autoname",
+	},
+	"Employee": {
+		"autoname": "pws.employee.autoname",
+	},
+	"Journal Entry": {
+		"on_submit": "pws.journal_entry.on_submit",
+		"on_cancel": "pws.journal_entry.on_cancel",
 	}
 }
 
