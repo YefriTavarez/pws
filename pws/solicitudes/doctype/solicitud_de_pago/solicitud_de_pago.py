@@ -13,7 +13,7 @@ from erpnext.accounts.utils import get_account_currency, get_balance_on
 class SolicituddePago(Document):
 	def after_insert(self):
 		self.validate_past_required_by()
-		self.notify_payment_request_approvers()
+		# self.notify_payment_request_approvers()
 
 	def validate(self):
 		self.validate_mandatory_party()
@@ -26,7 +26,7 @@ class SolicituddePago(Document):
 		self.validate_change_status()
 		self.validate_disbursement_account()
 		self.validate_signatures()
-		self.notify_payment_request_user()
+		# self.notify_payment_request_user()
 
 	def validate_mandatory_party(self):
 		if not self.party and not self.other_party:

@@ -11,6 +11,7 @@ frappe.ui.form.on('Tarea', {
 
 			frm.trigger("set_as_read_only_fields")
 		}
+		frm.trigger("toggle_color_fields");
 	},
 	onload: function(frm) {
 		frm.doc.previous_status = frm.doc.status
@@ -53,6 +54,81 @@ frappe.ui.form.on('Tarea', {
 		})
 
 		frm.disable_save()
+	},
+	toggle_color_fields: function(frm) {
+		const colors_for_sku = frm.doc.__onload.colors_for_sku;
+
+		if (!colors_for_sku) { return ; }
+		if (!frm.doc.enable_colors) { return ; }
+
+		const color_fields = [
+			"color_pantone_tiro_1",
+			"color_pantone_tiro_2",
+			"color_pantone_tiro_3",
+			"color_pantone_tiro_4",
+
+			"color_pantone_retiro_1",
+			"color_pantone_retiro_2",
+			"color_pantone_retiro_3",
+			"color_pantone_retiro_4",
+
+			"color_proceso_tiro_1",
+			"color_proceso_tiro_2",
+			"color_proceso_tiro_3",
+			"color_proceso_tiro_4",
+
+			"color_proceso_retiro_1",
+			"color_proceso_retiro_2",
+			"color_proceso_retiro_3",
+			"color_proceso_retiro_4",
+		];
+
+		$.map(color_fields, function(field) {
+			frm.toggle_display(field, false);
+		});
+
+		for (index = 1; index <= cint(colors_for_sku.cantidad_tiro_pantone); index ++) {
+			const fieldlist = [	
+				"color_pantone_tiro_1",
+				"color_pantone_tiro_2",
+				"color_pantone_tiro_3",
+				"color_pantone_tiro_4",
+			];
+
+			frm.toggle_display(fieldlist[index - 1], true);
+		}
+
+		for (index = 1; index <= cint(colors_for_sku.cantidad_pantone_retiro); index ++) {
+			const fieldlist = [	
+				"color_pantone_retiro_1",
+				"color_pantone_retiro_2",
+				"color_pantone_retiro_3",
+				"color_pantone_retiro_4",
+			];
+			frm.toggle_display(fieldlist[index - 1], true);
+		}
+
+		for (index = 1; index <= cint(colors_for_sku.cantidad_tiro_proceso); index ++) {
+			const fieldlist = [	
+				"color_proceso_tiro_1",
+				"color_proceso_tiro_2",
+				"color_proceso_tiro_3",
+				"color_proceso_tiro_4",
+			];
+			
+			frm.toggle_display(fieldlist[index - 1], true);
+		}
+
+		for (index = 1; index <= cint(colors_for_sku.cantidad_proceso_retiro); index ++) {
+			const fieldlist = [	
+				"color_proceso_retiro_1",
+				"color_proceso_retiro_2",
+				"color_proceso_retiro_3",
+				"color_proceso_retiro_4",
+			];
+			
+			frm.toggle_display(fieldlist[index - 1], true);
+		}
 	},
 	status: function(frm) {
 		if (frm.doc.status == "Open" && frm.doc.previous_status == "Overdue") {

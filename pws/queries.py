@@ -216,13 +216,15 @@ def project_template_query(doctype, txt, searchfield, start, page_len, filters):
 	return [[row.name] for row in template_list]
 
 def item_query(doctype, txt, searchfield, start, page_len, filters):
-	txt = "%".join(txt.split())
-
-	item_list = frappe.get_list("Item", {
-		"disabled": "0",
-		# "item_group_1": conf.materials_item_group if filters and filters.get("buying") else conf.item_group,
-		"description": ["like", "%{}%".format(txt) if txt else "%"]
-	}, ["name", "description"], order_by="name")
+	item_list = frappe.db.sql("""SELECT
+			`tabItem`.name,
+			`tabItem`.description
+		FROM tabItem
+		WHERE disabled = 0
+			AND (description LIKE %s
+			OR name LIKE %s)
+		ORDER BY name ASC""", ("%{0}%".format(txt) if txt else "%", 
+		"%{0}%".format(txt) if txt else "%"), as_dict=True, debug=False)
 
 	return [[row.name, row.description] for row in item_list]
 

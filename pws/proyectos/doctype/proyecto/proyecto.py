@@ -30,8 +30,10 @@ class Proyecto(Document):
 				"task_id": doc.name,
 				"dependant": doc.dependant,
 				"close_date": doc.close_date,
+				"enable_colors": doc.enable_colors,
 			})
 
+		self.update_colors()
 		self.update_percent_complete()
 		self.update_costs()
 
@@ -93,6 +95,47 @@ class Proyecto(Document):
 		self.get_total_purchase_order_cost()
 		self.get_total_sales_order_cost()
 		self.get_total_sales_invoice_cost()
+
+	def update_colors(self):
+		self.colors = " - ".join(self.get_colors())
+		return self.as_dict()
+
+	def get_colors(self):
+		colors = []
+		for task in self.get_tasks():
+			for fieldname in self.get_color_fieldnames():
+				value = task.get(fieldname)
+
+				if value:
+					colors.append(value)
+		return colors
+
+	def get_tasks(self):
+		return [ frappe.get_doc("Tarea", task.task_id) \
+			for task in self.tasks if task.enable_colors ]
+
+	def get_color_fieldnames(self):
+		return (
+			"color_pantone_tiro_1",
+			"color_pantone_tiro_2",
+			"color_pantone_tiro_3",
+			"color_pantone_tiro_4",
+
+			"color_pantone_retiro_1",
+			"color_pantone_retiro_2",
+			"color_pantone_retiro_3",
+			"color_pantone_retiro_4",
+
+			"color_proceso_tiro_1",
+			"color_proceso_tiro_2",
+			"color_proceso_tiro_3",
+			"color_proceso_tiro_4",
+
+			"color_proceso_retiro_1",
+			"color_proceso_retiro_2",
+			"color_proceso_retiro_3",
+			"color_proceso_retiro_4",
+		)
 
 	def get_total_sales_invoice_cost(self):
 		result = frappe.db.sql("""SELECT SUM(child.amount)
@@ -296,6 +339,7 @@ def sync_task(task, project_name):
 		"dependant": task.dependant,
 		"owner": task.user,
 		"time_unit": task.time_unit,
+		"enable_colors": task.enable_colors,
 		"max_time": task.max_time
 	})
 
